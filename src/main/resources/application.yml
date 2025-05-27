@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT}
+
+spring:
+  application:
+    name: job.ts.be.v2
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
+  servlet:
+    multipart:
+      enabled:true
+      max-file-size:50MB
+      max-request-size:100MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiredDay: ${JWT_EXPIRED_DAY}
