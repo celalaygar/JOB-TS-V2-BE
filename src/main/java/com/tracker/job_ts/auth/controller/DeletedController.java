@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class DeletedController {
 
-    // Admin'e özel endpoint
     @GetMapping("/get-message")
     public Mono<String> getDeletedPage() {
         return Mono.just("Welcome ROLE_DELETED");
