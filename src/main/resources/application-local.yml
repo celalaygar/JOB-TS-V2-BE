@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+
+
+spring:
+  application:
+    name: job.ts.be.v2
+  data:
+    mongodb:
+      uri: mongodb://root11:371root1124@localhost:27017/jobts_v2?authSource=admin
+  servlet:
+    multipart:
+      enabled:true
+      max-file-size:50MB
+      max-request-size:100MB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: aygarcelalx@gmail.com
+    password: ksct dajq davg cryz
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+jwt:
+  secret: "QWx3YXlzLXNlY3VyZS1hbmQtc3Ryb25nLWtleS1mb3Itam90LTUxMi1zZWN1cml0eS0xMjM0NTY3ODkwMTIzNDU2Nzg5"
+  invitation-secret: "QWx3YXlzLXNlY3VyZS1hbmQtc3Ryb25nLWtleS1mb3Itam90LTUxMi1zZWN1cml0eS0xMjM0NTY3ODkwMTIzNDU2Nzg4"
+  expiredDay: 86400000
+
+frontend:
+  url: "http://localhost:5173/"

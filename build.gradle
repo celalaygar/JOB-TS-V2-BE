@@ -1,0 +1,70 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.4'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+def loadEnvFile = file('.env')
+if (loadEnvFile.exists()) {
+	println "Loading environment variables from .env"
+	loadEnvFile.eachLine { line ->
+		if (line && !line.startsWith('#') && line.contains('=')) {
+			def (key, value) = line.split('=', 2)
+			System.setProperty(key.trim(), value.trim())
+		}
+	}
+}
+
+
+group = 'com.tracker'
+version = '0.0.1-SNAPSHOT'
+
+java {
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+configurations {
+	developmentOnly
+	runtimeClasspath {
+		extendsFrom developmentOnly
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly('io.jsonwebtoken:jjwt-jackson:0.12.6') {
+		exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+	}
+
+	// Reactor tools (optional for debugging)
+	developmentOnly 'io.projectreactor:reactor-tools'
+
+	// Validation
+	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+	// Springdoc OpenAPI dependency
+	implementation("org.springdoc:springdoc-openapi-webflux-ui:1.8.0")
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
