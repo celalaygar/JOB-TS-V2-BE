@@ -156,18 +156,35 @@ public class InvitationServiceImpl implements InvitationService {
     @Override
     public Mono<Invitation> declineInvitation(InvitationRequestDto dto) {
         return authHelperService.getAuthUser()
-                .flatMap(user -> invitationRepository.findByIdAndInvitedUserEmail(dto.getInvitationId(), user.getEmail())
+                .flatMap(authUser -> invitationRepository.findById(dto.getInvitationId())
                         .switchIfEmpty(Mono.error(new RuntimeException("Invitation not found")))
                         .flatMap(invitation -> {
+                            String userEmail = authUser.getEmail();
+
+                            boolean isInvitedUser = invitation.getInvitedUser() != null
+                                    && userEmail.equals(invitation.getInvitedUser().getEmail());
+
+                            boolean isInvitedBy = invitation.getInvitedBy() != null
+                                    && userEmail.equals(invitation.getInvitedBy().getEmail());
+
+                            if (!isInvitedUser && !isInvitedBy) {
+                                return Mono.error(new RuntimeException("Bu daveti reddetme yetkiniz yok."));
+                            }
+
                             invitation.setStatus(InvitationStatus.DECLINED);
+
                             return invitationRepository.save(invitation)
                                     .flatMap(saved -> {
-                                        // Bildirim gönder
-                                        String to = invitation.getInvitedBy().getEmail();
+                                        String to = isInvitedUser
+                                                ? invitation.getInvitedBy().getEmail()
+                                                : invitation.getInvitedUser().getEmail();
+
                                         return emailService.sendDeclineNotificationEmail(to, invitation.getProject().getName())
                                                 .thenReturn(saved);
                                     });
-                        }));
+                        })
+                );
     }
+
 
 }
