@@ -93,7 +93,7 @@ public class AuthService {
                     System.out.println(newUser.toString());
                     return userRepository.save(newUser)
                             .flatMap(savedUser ->
-                                    invitationRepository.findByToken(request.getToken())
+                                    invitationRepository.findByTokenAndStatus(request.getToken(), InvitationStatus.PENDING)
                                             .flatMap(invitation -> {
                                                 invitation.setStatus(InvitationStatus.ACCEPTED);
                                                 invitation.setInvitedUser(UserSummaryMapper.mapUser(savedUser));

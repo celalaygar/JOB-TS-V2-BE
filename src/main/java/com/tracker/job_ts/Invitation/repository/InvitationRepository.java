@@ -11,6 +11,7 @@ public interface InvitationRepository extends ReactiveMongoRepository<Invitation
     Flux<Invitation> findByInvitedUserEmailAndStatus(String email, InvitationStatus status);
     Mono<Invitation> findByIdAndInvitedUserEmail(String id, String email);
     Mono<Invitation> findByToken( String token);
+    Mono<Invitation> findByTokenAndStatus( String token, InvitationStatus status);
     Flux<Invitation> findByProjectId(String projectId);
     Flux<Invitation> findByProjectIdAndStatusIsNot(String projectId, InvitationStatus status);
     Mono<Boolean> existsByProjectIdAndInvitedUserEmail(String projectId, String email);
