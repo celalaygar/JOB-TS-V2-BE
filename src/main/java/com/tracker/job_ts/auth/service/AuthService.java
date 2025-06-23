@@ -58,7 +58,7 @@ public class AuthService {
 
     public Mono<AuthResponse> login(AuthRequest request) {
         return userRepository.findByEmail(request.getEmail())
-                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
+                .switchIfEmpty(Mono.error(new RuntimeException("Invalid User Email or Password")))
                 .flatMap(user -> {
                     if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                         return Mono.error(new RuntimeException("Invalid credentials"));

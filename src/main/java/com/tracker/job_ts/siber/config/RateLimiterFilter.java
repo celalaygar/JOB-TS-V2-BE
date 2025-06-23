@@ -19,7 +19,7 @@ public class RateLimiterFilter implements WebFilter {
 
     private final RateLimitRepository rateLimitRepository;
 
-    private static final int DEFAULT_MAX_REQUESTS = 8;
+    private static final int DEFAULT_MAX_REQUESTS = 28;
     private static final int AUTH_MAX_REQUESTS = 5;
     private static final Duration WINDOW = Duration.ofSeconds(60);
 

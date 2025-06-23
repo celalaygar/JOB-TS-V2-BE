@@ -8,9 +8,6 @@ import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.auth.service.AuthService;
 import com.tracker.job_ts.base.util.ApiPaths;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
