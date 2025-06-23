@@ -1,6 +1,6 @@
 package com.tracker.job_ts.projectTask.service;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
-import com.tracker.job_ts.projectTask.repository.TaskRepository;
+import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
 
-    private final TaskRepository taskRepository;
+    private final ProjectTaskRepository taskRepository;
 
     @Override
     public Mono<ProjectTask> createTask(ProjectTask task) {

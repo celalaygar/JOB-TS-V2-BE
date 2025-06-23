@@ -8,4 +8,6 @@ import reactor.core.publisher.Flux;
 @Repository
 public interface SprintRepository extends ReactiveMongoRepository<Sprint, String> {
     Flux<Sprint> findByStatus(String status);
+    Flux<Sprint> findByCreatedProjectId(String projectId);
+    Flux<Sprint> findAllByCreatedProjectId(String projectId);
 }

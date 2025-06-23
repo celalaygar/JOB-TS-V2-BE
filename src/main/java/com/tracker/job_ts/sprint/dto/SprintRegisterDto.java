@@ -1,27 +1,24 @@
-package com.tracker.job_ts.sprint.entity;
+package com.tracker.job_ts.sprint.dto;
 
-import com.tracker.job_ts.project.model.CreatedBy;
-import com.tracker.job_ts.project.model.CreatedProject;
-import com.tracker.job_ts.sprint.model.TaskStatusOnCompletion;
+import com.tracker.job_ts.sprint.entity.SprintStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 
-@Document(collection = "sprints")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Sprint {
+public class SprintRegisterDto {
     @Id
     private String id;
-    private CreatedProject createdProject;
+    private String projectId;
+    private String projectTaskStatusId;
     private String name;
     private Date startDate;
     private Date endDate;
@@ -29,8 +26,6 @@ public class Sprint {
     private int totalIssues;
     private int completedIssues;
     private SprintStatus sprintStatus;
-    private TaskStatusOnCompletion taskStatusOnCompletion;
-    private CreatedBy createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
