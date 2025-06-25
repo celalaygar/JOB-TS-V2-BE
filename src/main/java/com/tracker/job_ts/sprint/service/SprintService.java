@@ -15,6 +15,7 @@ import com.tracker.job_ts.sprint.entity.SprintUser;
 import com.tracker.job_ts.sprint.model.TaskStatusOnCompletion;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.repository.SprintUserRepository;
+import com.tracker.job_ts.sprint.util.GenerationCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -55,6 +56,7 @@ public class SprintService {
 
                                                     Sprint sprint = Sprint.builder()
                                                             .name(dto.getName())
+                                                            .sprintCode(GenerationCode.generateProjectCode(dto.getName()))
                                                             .startDate(dto.getStartDate())
                                                             .endDate(dto.getEndDate())
                                                             .status(dto.getStatus())
@@ -172,4 +174,6 @@ public class SprintService {
     public Flux<Sprint> getAllByProject(String projectId) {
         return sprintRepository.findAllByCreatedProjectId(projectId);
     }
+
+
 }
