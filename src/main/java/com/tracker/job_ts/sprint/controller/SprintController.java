@@ -1,6 +1,7 @@
 package com.tracker.job_ts.sprint.controller;
 
 import com.tracker.job_ts.base.util.ApiPaths;
+import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.service.SprintService;
@@ -40,6 +41,11 @@ public class SprintController {
     @GetMapping("/project/{projectId}")
     public Flux<Sprint> getSprintsByProject(@PathVariable String projectId) {
         return sprintService.getAllByProject(projectId);
+    }
+
+    @GetMapping("/getAll")
+    public Flux<SprintDto> getAll() {
+        return sprintService.getAll();
     }
 
     @PostMapping("/{sprintId}/users")

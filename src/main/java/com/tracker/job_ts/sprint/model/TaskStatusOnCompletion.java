@@ -23,8 +23,6 @@ public class TaskStatusOnCompletion {
     private String english;
     private Integer order;
     private String color;
-    private CreatedProject createdProject;
-    private CreatedBy createdBy;
 
 
     public TaskStatusOnCompletion(ProjectTaskStatus status) {
@@ -34,7 +32,5 @@ public class TaskStatusOnCompletion {
         this.turkish = status.getTurkish();
         this.english = status.getEnglish();
         this.order = status.getOrder();
-        this.createdProject = status.getCreatedProject();
-        this.createdBy = status.getCreatedBy();
     }
 }

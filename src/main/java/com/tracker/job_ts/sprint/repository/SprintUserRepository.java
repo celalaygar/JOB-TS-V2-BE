@@ -9,6 +9,8 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface SprintUserRepository extends ReactiveMongoRepository<SprintUser, String> {
     Flux<SprintUser> findBySprintId(String sprintId);
+    Flux<SprintUser> findAllByUserId(String userId);
+
     Mono<Void> deleteBySprintIdAndUserId(String sprintId, String userId);
     Mono<Boolean> existsBySprintIdAndUserId(String sprintId, String userId);
 }

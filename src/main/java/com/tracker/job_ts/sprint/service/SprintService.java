@@ -1,13 +1,17 @@
 package com.tracker.job_ts.sprint.service;
 
 import com.tracker.job_ts.auth.service.AuthHelperService;
+import com.tracker.job_ts.project.dto.ProjectDto;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.entity.ProjectTaskStatus;
+import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
+import com.tracker.job_ts.project.model.ProjectSystemStatus;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
+import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.entity.SprintStatus;
@@ -89,6 +93,7 @@ public class SprintService {
                                 )
                 );
     }
+
     public Mono<Sprint> updateSprint(String sprintId, SprintRegisterDto dto) {
         validator.validate(dto);
         return authHelperService.getAuthUser()
@@ -175,5 +180,17 @@ public class SprintService {
         return sprintRepository.findAllByCreatedProjectId(projectId);
     }
 
-
+    public Flux<SprintDto> getAll() {
+        return authHelperService.getAuthUser()
+                .flatMapMany(authUser ->
+                        sprintUserRepository.findAllByUserId(authUser.getId())
+                                .map(SprintUser::getSprintId)
+                                .distinct()
+                                .collectList()
+                                .flatMapMany(sprintIds -> {
+                                    return sprintRepository.findAllById(sprintIds)
+                                            .map(SprintDto::new);
+                                })
+                );
+    }
 }
