@@ -21,8 +21,8 @@ import java.util.Date;
 public class Sprint {
     @Id
     private String id;
-    private CreatedProject createdProject;
     private String name;
+    private String description;
     private String sprintCode;
     private Date startDate;
     private Date endDate;
@@ -31,6 +31,7 @@ public class Sprint {
     private int completedIssues;
     private SprintStatus sprintStatus;
     private TaskStatusOnCompletion taskStatusOnCompletion;
+    private CreatedProject createdProject;
     private CreatedBy createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

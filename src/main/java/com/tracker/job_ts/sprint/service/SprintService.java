@@ -60,6 +60,7 @@ public class SprintService {
 
                                                     Sprint sprint = Sprint.builder()
                                                             .name(dto.getName())
+                                                            .description(dto.getDescription())
                                                             .sprintCode(GenerationCode.generateProjectCode(dto.getName()))
                                                             .startDate(dto.getStartDate())
                                                             .endDate(dto.getEndDate())
@@ -119,6 +120,7 @@ public class SprintService {
                                                                 Project project = tuple.getT2();
 
                                                                 existing.setName(dto.getName());
+                                                                existing.setDescription(dto.getDescription());
                                                                 existing.setStartDate(dto.getStartDate());
                                                                 existing.setEndDate(dto.getEndDate());
                                                                 existing.setStatus(dto.getStatus());
