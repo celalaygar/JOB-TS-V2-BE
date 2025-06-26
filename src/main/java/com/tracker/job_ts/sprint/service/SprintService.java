@@ -195,4 +195,27 @@ public class SprintService {
                                 })
                 );
     }
+    public Mono<SprintDto> getById(String sprintId) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser ->
+                        sprintUserRepository.findBySprintIdAndUserId(sprintId, authUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not authorized to view this sprint.")))
+                                .flatMap(sprintUser ->
+                                        sprintRepository.findById(sprintId)
+                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
+                                                .map(SprintDto::new)
+                                )
+                );
+    }
+    public Flux<SprintDto> getNonCompletedSprintsByProjectId(String projectId) {
+        return authHelperService.getAuthUser()
+                .flatMapMany(authUser ->
+                        projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
+                                .thenMany(
+                                        sprintRepository.findAllByCreatedProjectIdAndSprintStatusIsNot(projectId, SprintStatus.COMPLATED)
+                                                .map(SprintDto::new)
+                                )
+                );
+    }
 }

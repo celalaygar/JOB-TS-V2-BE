@@ -37,7 +37,11 @@ public class SprintController {
         return sprintService.deleteSprint(id)
                 .thenReturn(ResponseEntity.noContent().build());
     }
-
+    @GetMapping("/{sprintId}")
+    public Mono<ResponseEntity<SprintDto>> getById(@PathVariable String sprintId) {
+        return sprintService.getById(sprintId)
+                .map(ResponseEntity::ok);
+    }
     @GetMapping("/project/{projectId}")
     public Flux<Sprint> getSprintsByProject(@PathVariable String projectId) {
         return sprintService.getAllByProject(projectId);
@@ -46,6 +50,10 @@ public class SprintController {
     @GetMapping("/getAll")
     public Flux<SprintDto> getAll() {
         return sprintService.getAll();
+    }
+    @GetMapping("/non-completed/project/{projectId}")
+    public Flux<SprintDto> getNonCompletedSprintsByProject(@PathVariable String projectId) {
+        return sprintService.getNonCompletedSprintsByProjectId(projectId);
     }
 
     @PostMapping("/{sprintId}/users")

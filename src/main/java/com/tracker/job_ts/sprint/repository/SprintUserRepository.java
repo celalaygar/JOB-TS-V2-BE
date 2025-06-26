@@ -13,4 +13,5 @@ public interface SprintUserRepository extends ReactiveMongoRepository<SprintUser
 
     Mono<Void> deleteBySprintIdAndUserId(String sprintId, String userId);
     Mono<Boolean> existsBySprintIdAndUserId(String sprintId, String userId);
+    Mono<SprintUser> findBySprintIdAndUserId(String sprintId, String userId);
 }
