@@ -22,6 +22,7 @@ public class SprintDto {
     private String id;
     private CreatedProject createdProject;
     private String name;
+    private String description;
     private String sprintCode;
     private Date startDate;
     private Date endDate;
@@ -35,6 +36,7 @@ public class SprintDto {
     public SprintDto(Sprint sprint){
         this.id = sprint.getId();
         this.name = sprint.getName();
+        this.description = sprint.getDescription();
         this.createdProject = sprint.getCreatedProject();
         this.sprintCode = sprint.getSprintCode();
         this.startDate = sprint.getStartDate();
