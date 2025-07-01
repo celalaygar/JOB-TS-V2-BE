@@ -4,6 +4,7 @@ import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.backlog.entity.Backlog;
 import com.tracker.job_ts.backlog.repository.BacklogRepository;
+import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
@@ -34,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
 @Service
 @RequiredArgsConstructor
 public class ProjectTaskService {
@@ -152,54 +154,44 @@ public class ProjectTaskService {
                 );
     }
 
-    public Flux<ProjectTaskDto> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
-        return authHelperService.getAuthUser()
-                .flatMapMany(authUser ->
-                        projectUserRepository.findByProjectIdAndUserId(filterDto.getProjectId(), authUser.getId())
-                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
-                                .flatMapMany(projectUser -> {
+    public Mono<PagedResult<ProjectTaskDto>> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
+        Query query = new Query();
 
-                                    Criteria criteria = new Criteria();
+        // Dynamic criteria
+        if (filterDto.getTitle() != null && !filterDto.getTitle().isBlank()) {
+            query.addCriteria(Criteria.where("title").regex(filterDto.getTitle(), "i"));
+        }
+        if (filterDto.getDescription() != null && !filterDto.getDescription().isBlank()) {
+            query.addCriteria(Criteria.where("description").regex(filterDto.getDescription(), "i"));
+        }
+        if (filterDto.getPriority() != null) {
+            query.addCriteria(Criteria.where("priority").is(filterDto.getPriority()));
+        }
+        if (filterDto.getTaskType() != null) {
+            query.addCriteria(Criteria.where("taskType").is(filterDto.getTaskType()));
+        }
+        if (filterDto.getProjectTaskStatusId() != null) {
+            query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()));
+        }
+        if (filterDto.getProjectId() != null) {
+            query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
+        }
+        if (filterDto.getAssigneeId() != null) {
+            query.addCriteria(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
+        }
 
-                                    List<Criteria> criteriaList = new ArrayList<>();
-                                    criteriaList.add(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
+        // Pagination
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        query.with(pageRequest);
 
-                                    if (filterDto.getTitle() != null && !filterDto.getTitle().isEmpty()) {
-                                        criteriaList.add(Criteria.where("title").regex(filterDto.getTitle(), "i"));
-                                    }
-                                    if (filterDto.getDescription() != null && !filterDto.getDescription().isEmpty()) {
-                                        criteriaList.add(Criteria.where("description").regex(filterDto.getDescription(), "i"));
-                                    }
-                                    if (filterDto.getPriority() != null) {
-                                        criteriaList.add(Criteria.where("priority").is(filterDto.getPriority()));
-                                    }
-                                    if (filterDto.getTaskType() != null) {
-                                        criteriaList.add(Criteria.where("taskType").is(filterDto.getTaskType()));
-                                    }
-                                    if (filterDto.getProjectTaskStatusId() != null && !filterDto.getProjectTaskStatusId().isEmpty()) {
-                                        criteriaList.add(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()));
-                                    }
-                                    if (filterDto.getAssigneeId() != null && !filterDto.getAssigneeId().isEmpty()) {
-                                        criteriaList.add(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
-                                    }
-                                    if (filterDto.getSprintId() != null && !filterDto.getSprintId().isEmpty()) {
-                                        criteriaList.add(Criteria.where("sprint.id").is(filterDto.getSprintId()));
-                                    }
-                                    if (filterDto.getParentTaskId() != null && !filterDto.getParentTaskId().isEmpty()) {
-                                        criteriaList.add(Criteria.where("parentTaskId").is(filterDto.getParentTaskId()));
-                                    }
+        Mono<List<ProjectTaskDto>> tasks = mongoTemplate.find(query, ProjectTask.class)
+                .map(ProjectTaskDto::new)
+                .collectList();
 
-                                    criteria.andOperator(criteriaList.toArray(new Criteria[0]));
+        Mono<Long> count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), ProjectTask.class);
 
-                                    Query query = new Query(criteria);
-
-                                    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-                                    query.with(pageable);
-
-                                    return mongoTemplate.find(query, ProjectTask.class)
-                                            .map(ProjectTaskDto::new);
-                                })
-                );
+        return Mono.zip(tasks, count)
+                .map(tuple -> new PagedResult<>(tuple.getT1(), tuple.getT2(), page, size));
     }
 
 

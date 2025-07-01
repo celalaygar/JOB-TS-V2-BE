@@ -1,5 +1,6 @@
 package com.tracker.job_ts.projectTask.controller;
 
+import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
@@ -32,10 +33,10 @@ public class ProjectTaskController {
     }
 
     @PostMapping("/filter")
-    public Flux<ProjectTaskDto> filterTasks(
+    public Mono<PagedResult<ProjectTaskDto>> filterTasks(
             @RequestBody ProjectTaskFltreRequestDto filterDto,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return projectTaskService.filterTasks(filterDto, page, size);
     }
 }
