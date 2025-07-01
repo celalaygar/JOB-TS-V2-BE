@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface ProjectTaskStatusRepository extends ReactiveMongoRepository<ProjectTaskStatus, String> {
     Flux<ProjectTaskStatus> findByCreatedProjectId(String projectId);
+    Mono<ProjectTaskStatus> findByIdAndCreatedProjectId(String id,String projectId);
     Mono<Boolean> existsByCreatedProjectIdAndName(String projectId, String name);
     Mono<Boolean> existsByCreatedProjectIdAndOrder(String projectId, Integer order);
     Flux<ProjectTaskStatus> findByCreatedProjectIdOrderByOrderDesc(String projectId);
