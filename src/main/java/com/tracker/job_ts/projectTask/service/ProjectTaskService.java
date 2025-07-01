@@ -11,6 +11,7 @@ import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
@@ -20,12 +21,18 @@ import com.tracker.job_ts.sprint.entity.SprintStatus;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.util.GenerationCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.*;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 @Service
 @RequiredArgsConstructor
@@ -39,6 +46,7 @@ public class ProjectTaskService {
     private final SprintRepository sprintRepository;
     private final BacklogRepository backlogRepository;
     private final AuthHelperService authHelperService;
+    private final ReactiveMongoTemplate mongoTemplate;
 
     public Mono<ProjectTaskDto> createTask(ProjectTaskRequestDto dto) {
         return authHelperService.getAuthUser()
@@ -144,14 +152,56 @@ public class ProjectTaskService {
                 );
     }
 
-    public Flux<ProjectTaskDto> getAllByProjectId(String projectId) {
+    public Flux<ProjectTaskDto> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
         return authHelperService.getAuthUser()
-                .flatMapMany(user -> projectUserRepository.findByProjectIdAndUserId(projectId, user.getId())
-                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
-                        .thenMany(taskRepository.findByCreatedProjectId(projectId)
-                                .map(ProjectTaskDto::new))
+                .flatMapMany(authUser ->
+                        projectUserRepository.findByProjectIdAndUserId(filterDto.getProjectId(), authUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                                .flatMapMany(projectUser -> {
+
+                                    Criteria criteria = new Criteria();
+
+                                    List<Criteria> criteriaList = new ArrayList<>();
+                                    criteriaList.add(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
+
+                                    if (filterDto.getTitle() != null && !filterDto.getTitle().isEmpty()) {
+                                        criteriaList.add(Criteria.where("title").regex(filterDto.getTitle(), "i"));
+                                    }
+                                    if (filterDto.getDescription() != null && !filterDto.getDescription().isEmpty()) {
+                                        criteriaList.add(Criteria.where("description").regex(filterDto.getDescription(), "i"));
+                                    }
+                                    if (filterDto.getPriority() != null) {
+                                        criteriaList.add(Criteria.where("priority").is(filterDto.getPriority()));
+                                    }
+                                    if (filterDto.getTaskType() != null) {
+                                        criteriaList.add(Criteria.where("taskType").is(filterDto.getTaskType()));
+                                    }
+                                    if (filterDto.getProjectTaskStatusId() != null && !filterDto.getProjectTaskStatusId().isEmpty()) {
+                                        criteriaList.add(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()));
+                                    }
+                                    if (filterDto.getAssigneeId() != null && !filterDto.getAssigneeId().isEmpty()) {
+                                        criteriaList.add(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
+                                    }
+                                    if (filterDto.getSprintId() != null && !filterDto.getSprintId().isEmpty()) {
+                                        criteriaList.add(Criteria.where("sprint.id").is(filterDto.getSprintId()));
+                                    }
+                                    if (filterDto.getParentTaskId() != null && !filterDto.getParentTaskId().isEmpty()) {
+                                        criteriaList.add(Criteria.where("parentTaskId").is(filterDto.getParentTaskId()));
+                                    }
+
+                                    criteria.andOperator(criteriaList.toArray(new Criteria[0]));
+
+                                    Query query = new Query(criteria);
+
+                                    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+                                    query.with(pageable);
+
+                                    return mongoTemplate.find(query, ProjectTask.class)
+                                            .map(ProjectTaskDto::new);
+                                })
                 );
     }
+
 
     private Mono<Backlog> ensureBacklog(String projectId, CreatedBy user, CreatedProject project) {
         return backlogRepository.findByCreatedProjectId(projectId)

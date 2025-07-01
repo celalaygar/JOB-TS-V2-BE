@@ -2,9 +2,11 @@ package com.tracker.job_ts.projectTask.controller;
 
 import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
 import com.tracker.job_ts.projectTask.service.ProjectTaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -29,8 +31,11 @@ public class ProjectTaskController {
         return projectTaskService.updateTask(taskId, dto);
     }
 
-    @GetMapping("/project/{projectId}")
-    public Flux<ProjectTaskDto> getAllByProject(@PathVariable String projectId) {
-        return projectTaskService.getAllByProjectId(projectId);
+    @PostMapping("/filter")
+    public Flux<ProjectTaskDto> filterTasks(
+            @RequestBody ProjectTaskFltreRequestDto filterDto,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        return projectTaskService.filterTasks(filterDto, page, size);
     }
 }
