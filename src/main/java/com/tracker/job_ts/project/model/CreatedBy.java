@@ -2,6 +2,7 @@ package com.tracker.job_ts.project.model;
 
 import com.tracker.job_ts.auth.entity.SystemRole;
 import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.project.entity.ProjectUser;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,13 @@ public class CreatedBy {
     private String username;
 
     public CreatedBy(User user) {
+        this.id = user.getId();
+        this.email = user.getEmail();
+        this.firstname = user.getFirstname();
+        this.lastname = user.getLastname();
+        this.username = user.getUsername();
+    }
+    public CreatedBy(ProjectUser user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.firstname = user.getFirstname();

@@ -1,5 +1,6 @@
 package com.tracker.job_ts.projectTask.service;
 
+import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.backlog.entity.Backlog;
 import com.tracker.job_ts.backlog.repository.BacklogRepository;
@@ -26,7 +27,6 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
-
 @Service
 @RequiredArgsConstructor
 public class ProjectTaskService {
@@ -43,42 +43,48 @@ public class ProjectTaskService {
     public Mono<ProjectTaskDto> createTask(ProjectTaskRequestDto dto) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
-                        .switchIfEmpty(Mono.defer(() -> Mono.error(new IllegalAccessException("User is not a member of this project."))))
+                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                         .flatMap(projectUser -> projectRepository.findById(dto.getProjectId())
-                                .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("Project not found."))))
-                                .flatMap(project ->
-                                        projectTaskStatusRepository.findByIdAndCreatedProjectId(dto.getProjectTaskStatusId(), dto.getProjectId())
-                                                .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("ProjectTaskStatus not found."))))
-                                                .flatMap(status -> taskMapper.toEntity(dto).flatMap(task -> {
+                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
+                                .flatMap(project -> projectTaskStatusRepository.findByIdAndCreatedProjectId(dto.getProjectTaskStatusId(), dto.getProjectId())
+                                        .switchIfEmpty(Mono.error(new NoSuchElementException("ProjectTaskStatus not found.")))
+                                        .flatMap(status -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), dto.getAssigneeId())
+                                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignee is not a member of this project.")))
+                                                .flatMap(assigneeProjectUser -> {
+                                                    CreatedBy assignee = new CreatedBy(assigneeProjectUser);
                                                     CreatedProject createdProject = new CreatedProject(project);
                                                     CreatedBy createdBy = new CreatedBy(user);
-                                                    task.setTaskNumber(GenerationCode.generateProjectCode(GenerationCode.TASK, dto.getTitle()));
-                                                    task.setCreatedBy(createdBy);
-                                                    task.setAssignee(dto.getAssignee());
-                                                    task.setCreatedProject(createdProject);
-                                                    task.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
-                                                    task.setProjectTaskStatus(new ProjectTaskStatusModel(status));
-                                                    task.setCreatedAt(Instant.now().toString());
 
-                                                    if (dto.getSprintId() != null) {
-                                                        return sprintRepository.findById(dto.getSprintId())
-                                                                .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("Sprint not found."))))
-                                                                .flatMap(sprint -> {
-                                                                    if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
-                                                                        task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                    return taskMapper.toEntity(dto).flatMap(task -> {
+                                                        task.setTaskNumber(GenerationCode.generateProjectCode(GenerationCode.TASK, dto.getTitle()));
+                                                        task.setCreatedBy(createdBy);
+                                                        task.setAssignee(assignee);
+                                                        task.setCreatedProject(createdProject);
+                                                        task.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
+                                                        task.setProjectTaskStatus(new ProjectTaskStatusModel(status));
+                                                        task.setCreatedAt(Instant.now().toString());
+
+                                                        if (dto.getSprintId() != null) {
+                                                            return sprintRepository.findById(dto.getSprintId())
+                                                                    .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
+                                                                    .flatMap(sprint -> {
+                                                                        if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
+                                                                            task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                                            return taskRepository.save(task).map(ProjectTaskDto::new);
+                                                                        } else {
+                                                                            return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
+                                                                        }
+                                                                    });
+                                                        } else {
+                                                            return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
+                                                                    .flatMap(backlog -> {
+                                                                        task.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
                                                                         return taskRepository.save(task).map(ProjectTaskDto::new);
-                                                                    } else {
-                                                                        return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
-                                                                    }
-                                                                });
-                                                    } else {
-                                                        return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
-                                                                .flatMap(backlog -> {
-                                                                    task.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
-                                                                    return taskRepository.save(task).map(ProjectTaskDto::new);
-                                                                });
-                                                    }
-                                                }))
+                                                                    });
+                                                        }
+                                                    });
+                                                })
+                                        )
                                 )
                         )
                 );
@@ -87,23 +93,26 @@ public class ProjectTaskService {
     public Mono<ProjectTaskDto> updateTask(String taskId, ProjectTaskRequestDto dto) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> taskRepository.findById(taskId)
-                        .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("Task not found."))))
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Task not found.")))
                         .flatMap(existingTask -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
-                                .switchIfEmpty(Mono.defer(() -> Mono.error(new IllegalAccessException("User is not a member of this project."))))
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                                 .flatMap(projectUser -> projectRepository.findById(dto.getProjectId())
-                                        .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("Project not found."))))
-                                        .flatMap(project ->
-                                                projectTaskStatusRepository.findByIdAndCreatedProjectId(dto.getProjectTaskStatusId(), dto.getProjectId())
-                                                        .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("ProjectTaskStatus not found."))))
-                                                        .flatMap(status -> {
+                                        .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
+                                        .flatMap(project -> projectTaskStatusRepository.findByIdAndCreatedProjectId(dto.getProjectTaskStatusId(), dto.getProjectId())
+                                                .switchIfEmpty(Mono.error(new NoSuchElementException("ProjectTaskStatus not found.")))
+                                                .flatMap(status -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), dto.getAssigneeId())
+                                                        .switchIfEmpty(Mono.error(new IllegalArgumentException("Assignee is not a member of this project.")))
+                                                        .flatMap(assigneeProjectUser -> {
+                                                            CreatedBy assignee = new CreatedBy(assigneeProjectUser);
                                                             CreatedProject createdProject = new CreatedProject(project);
                                                             CreatedBy createdBy = new CreatedBy(user);
+
                                                             existingTask.setTitle(dto.getTitle());
                                                             existingTask.setDescription(dto.getDescription());
                                                             existingTask.setPriority(dto.getPriority());
                                                             existingTask.setTaskType(dto.getTaskType());
                                                             existingTask.setParentTaskId(dto.getParentTaskId());
-                                                            existingTask.setAssignee(dto.getAssignee());
+                                                            existingTask.setAssignee(assignee);
                                                             existingTask.setCreatedProject(createdProject);
                                                             existingTask.setCreatedBy(createdBy);
                                                             existingTask.setProjectTaskStatus(new ProjectTaskStatusModel(status));
@@ -111,7 +120,7 @@ public class ProjectTaskService {
 
                                                             if (dto.getSprintId() != null) {
                                                                 return sprintRepository.findById(dto.getSprintId())
-                                                                        .switchIfEmpty(Mono.defer(() -> Mono.error(new NoSuchElementException("Sprint not found."))))
+                                                                        .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
                                                                         .flatMap(sprint -> {
                                                                             if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
                                                                                 existingTask.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
@@ -128,7 +137,9 @@ public class ProjectTaskService {
                                                                         });
                                                             }
                                                         })
-                                        ))
+                                                )
+                                        )
+                                )
                         )
                 );
     }
@@ -136,7 +147,7 @@ public class ProjectTaskService {
     public Flux<ProjectTaskDto> getAllByProjectId(String projectId) {
         return authHelperService.getAuthUser()
                 .flatMapMany(user -> projectUserRepository.findByProjectIdAndUserId(projectId, user.getId())
-                        .switchIfEmpty(Mono.defer(() -> Mono.error(new IllegalAccessException("User is not a member of this project."))))
+                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                         .thenMany(taskRepository.findByCreatedProjectId(projectId)
                                 .map(ProjectTaskDto::new))
                 );

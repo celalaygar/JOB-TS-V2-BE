@@ -23,6 +23,7 @@ public class ProjectTaskRequestDto {
     private String projectTaskStatusId;
     private String projectId;
     private CreatedBy assignee;
+    private String assigneeId;
     private String sprintId;
     private String parentTaskId;
 }
