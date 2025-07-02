@@ -8,11 +8,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjectTaskFltreRequestDto {
+public class ProjectTaskFltreRequestDto implements Serializable {
     private String title;
     private String description;
     private ProjectTaskPriority priority;
