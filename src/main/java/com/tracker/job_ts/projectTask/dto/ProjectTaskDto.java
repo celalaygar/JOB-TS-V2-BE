@@ -1,12 +1,14 @@
 package com.tracker.job_ts.projectTask.dto;
 
 import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.entity.ProjectTaskComment;
 import com.tracker.job_ts.projectTask.model.ProjectTaskPriority;
+import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
 import com.tracker.job_ts.projectTask.model.ProjectTaskSystemStatus;
 import com.tracker.job_ts.projectTask.model.ProjectTaskType;
 import lombok.AllArgsConstructor;
@@ -35,6 +37,7 @@ public class ProjectTaskDto {
     private String parentTaskId;
     private CreatedBy createdBy;
     private CreatedBy assignee;
+    private ProjectTaskStatusModel projectTaskStatus;
     private CreatedProject createdProject;
 
     public ProjectTaskDto(ProjectTask entity) {
@@ -50,7 +53,24 @@ public class ProjectTaskDto {
         this.parentTaskId = entity.getParentTaskId();
         this.createdBy = entity.getCreatedBy();
         this.assignee = entity.getAssignee();
+        this.projectTaskStatus = entity.getProjectTaskStatus();
         this.createdProject = entity.getCreatedProject();
     }
 
+    public ProjectTaskDto(ProjectTask entity, Project project) {
+        this.id = entity.getId();
+        this.taskNumber = entity.getTaskNumber();
+        this.title = entity.getTitle();
+        this.description = entity.getDescription();
+        this.systemStatus = entity.getSystemStatus();
+        this.priority = entity.getPriority();
+        this.taskType = entity.getTaskType();
+        this.sprint = entity.getSprint();
+        this.createdAt = entity.getCreatedAt();
+        this.parentTaskId = entity.getParentTaskId();
+        this.createdBy = entity.getCreatedBy();
+        this.assignee = entity.getAssignee();
+        this.projectTaskStatus = entity.getProjectTaskStatus();
+        this.createdProject = new CreatedProject(project);
+    }
 }

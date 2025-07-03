@@ -26,6 +26,11 @@ public class ProjectTaskController {
         return projectTaskService.createTask( dto);
     }
 
+    @GetMapping("/{taskId}")
+    public Mono<ProjectTaskDto> update(@PathVariable String taskId  ) {
+        return projectTaskService.getByTaskId(taskId );
+    }
+
     @PutMapping("/{taskId}")
     public Mono<ProjectTaskDto> update(@PathVariable String taskId,
                                        @RequestBody ProjectTaskRequestDto dto) {

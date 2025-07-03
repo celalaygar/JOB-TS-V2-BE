@@ -158,6 +158,25 @@ public class ProjectTaskService {
                 );
     }
 
+    public Mono<ProjectTaskDto> getByTaskId(String projectTaskId) {
+        return authHelperService.getAuthUser()
+                .flatMap(user -> projectUserRepository.findAllByUserId(user.getId()) // Flux<ProjectUser>
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Project User found.")))
+                        .flatMap(projectUser -> projectRepository.findById(projectUser.getProjectId()))
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Project found.")))
+                        .map(Project::getId)
+                        .collectList() // Mono<List<String>> tüm proje ID’leri
+                        .flatMap(projectIds -> taskRepository.findById(projectTaskId)
+                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project User found.")))
+                                .flatMap(existingTask ->
+                                        projectIds.contains(existingTask.getCreatedProject().getId()) ?
+                                                Mono.just(new ProjectTaskDto(existingTask)) :
+                                                Mono.error(new NoSuchElementException("Task not found.") )
+                                )
+                        )
+                );
+    }
+
     public Mono<PagedResult<ProjectTaskDto>> getAllFilteredTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> projectUserRepository.findAllByUserId(user.getId()) // Flux<ProjectUser>
@@ -174,16 +193,16 @@ public class ProjectTaskService {
         Query query = new Query();
 
         if (filterDto.getProjectId() != null &&
-            !CollectionUtils.isEmpty(projectIds) &&
-            projectIds.contains(filterDto.getProjectId()) &&
-            !StringUtils.isEmpty(filterDto.getProjectId())) {
+                !CollectionUtils.isEmpty(projectIds) &&
+                projectIds.contains(filterDto.getProjectId()) &&
+                !StringUtils.isEmpty(filterDto.getProjectId())) {
             query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
         } else if (filterDto.getProjectId() != null &&
                 !CollectionUtils.isEmpty(projectIds) &&
                 projectIds.contains(filterDto.getProjectId()) &&
                 !StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
             query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()).and("createdProject.id").is(filterDto.getProjectId()));
-        }  else if (!CollectionUtils.isEmpty(projectIds)) {
+        } else if (!CollectionUtils.isEmpty(projectIds)) {
             query.addCriteria(Criteria.where("createdProject.id").in(projectIds));
         }
 

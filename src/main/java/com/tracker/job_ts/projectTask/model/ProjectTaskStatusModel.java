@@ -13,10 +13,16 @@ import lombok.NoArgsConstructor;
 public class ProjectTaskStatusModel {
     private String id;
     private String name;
-
+    private String label;
+    private String turkish;
+    private String english;
+    private String color;
     public ProjectTaskStatusModel (ProjectTaskStatus status){
-
         this.id = status.getId();
         this.name = status.getName();
+        this.label = status.getLabel();
+        this.turkish = status.getTurkish();
+        this.english = status.getEnglish();
+        this.color = status.getColor();
     }
 }
