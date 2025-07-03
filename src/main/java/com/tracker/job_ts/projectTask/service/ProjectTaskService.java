@@ -171,7 +171,7 @@ public class ProjectTaskService {
                                 .flatMap(existingTask ->
                                         projectIds.contains(existingTask.getCreatedProject().getId()) ?
                                                 Mono.just(new ProjectTaskDto(existingTask)) :
-                                                Mono.error(new NoSuchElementException("Task not found.") )
+                                                Mono.error(new NoSuchElementException("Task not found."))
                                 )
                         )
                 );
@@ -192,16 +192,16 @@ public class ProjectTaskService {
     public Mono<PagedResult<ProjectTaskDto>> filterTasks(List<String> projectIds, ProjectTaskFltreRequestDto filterDto, int page, int size) {
         Query query = new Query();
 
-        if (filterDto.getProjectId() != null &&
+        if (!StringUtils.isEmpty(filterDto.getProjectId()) && !CollectionUtils.isEmpty(projectIds) &&
+                projectIds.contains(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
+            query.addCriteria(
+                    Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId())
+                            .and("createdProject.id").is(filterDto.getProjectId()));
+        } else if (filterDto.getProjectId() != null &&
                 !CollectionUtils.isEmpty(projectIds) &&
                 projectIds.contains(filterDto.getProjectId()) &&
                 !StringUtils.isEmpty(filterDto.getProjectId())) {
             query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
-        } else if (filterDto.getProjectId() != null &&
-                !CollectionUtils.isEmpty(projectIds) &&
-                projectIds.contains(filterDto.getProjectId()) &&
-                !StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
-            query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()).and("createdProject.id").is(filterDto.getProjectId()));
         } else if (!CollectionUtils.isEmpty(projectIds)) {
             query.addCriteria(Criteria.where("createdProject.id").in(projectIds));
         }
