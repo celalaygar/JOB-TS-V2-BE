@@ -33,7 +33,7 @@ public class CreatedBy {
         this.username = user.getUsername();
     }
     public CreatedBy(ProjectUser user) {
-        this.id = user.getId();
+        this.id = user.getUserId();
         this.email = user.getEmail();
         this.firstname = user.getFirstname();
         this.lastname = user.getLastname();
