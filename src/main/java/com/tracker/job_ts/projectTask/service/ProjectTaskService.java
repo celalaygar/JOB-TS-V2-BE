@@ -5,6 +5,7 @@ import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.backlog.entity.Backlog;
 import com.tracker.job_ts.backlog.repository.BacklogRepository;
 import com.tracker.job_ts.base.model.PagedResult;
+import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
@@ -28,6 +29,7 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -36,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -155,12 +158,39 @@ public class ProjectTaskService {
                 );
     }
 
-    public Mono<PagedResult<ProjectTaskDto>> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
+    public Mono<PagedResult<ProjectTaskDto>> getAllFilteredTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
+        return authHelperService.getAuthUser()
+                .flatMap(user -> projectUserRepository.findAllByUserId(user.getId()) // Flux<ProjectUser>
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Project User found.")))
+                        .flatMap(projectUser -> projectRepository.findById(projectUser.getProjectId()))
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Project found.")))
+                        .map(Project::getId)
+                        .collectList() // Mono<List<String>> tüm proje ID’leri
+                        .flatMap(projectIds -> this.filterTasks(projectIds, filterDto, page, size))
+                );
+    }
+
+    public Mono<PagedResult<ProjectTaskDto>> filterTasks(List<String> projectIds, ProjectTaskFltreRequestDto filterDto, int page, int size) {
         Query query = new Query();
-        if (!StringUtils.isEmpty(filterDto.getTitle()) ) {
+
+        if (filterDto.getProjectId() != null &&
+            !CollectionUtils.isEmpty(projectIds) &&
+            projectIds.contains(filterDto.getProjectId()) &&
+            !StringUtils.isEmpty(filterDto.getProjectId())) {
+            query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
+        } else if (filterDto.getProjectId() != null &&
+                !CollectionUtils.isEmpty(projectIds) &&
+                projectIds.contains(filterDto.getProjectId()) &&
+                !StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
+            query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()).and("createdProject.id").is(filterDto.getProjectId()));
+        }  else if (!CollectionUtils.isEmpty(projectIds)) {
+            query.addCriteria(Criteria.where("createdProject.id").in(projectIds));
+        }
+
+        if (!StringUtils.isEmpty(filterDto.getTitle())) {
             query.addCriteria(Criteria.where("title").regex(filterDto.getTitle(), "i"));
         }
-        if (!StringUtils.isEmpty(filterDto.getDescription()) ) {
+        if (!StringUtils.isEmpty(filterDto.getDescription())) {
             query.addCriteria(Criteria.where("description").regex(filterDto.getDescription(), "i"));
         }
         if (filterDto.getPriority() != null) {
@@ -169,13 +199,43 @@ public class ProjectTaskService {
         if (filterDto.getTaskType() != null) {
             query.addCriteria(Criteria.where("taskType").is(filterDto.getTaskType()));
         }
-        if (!StringUtils.isEmpty(filterDto.getProjectId()) ) {
+
+        if (!StringUtils.isEmpty(filterDto.getAssigneeId())) {
+            query.addCriteria(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        query.with(pageRequest);
+
+        Mono<List<ProjectTaskDto>> tasks = mongoTemplate.find(query, ProjectTask.class).map(ProjectTaskDto::new).collectList();
+        Mono<Long> count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), ProjectTask.class);
+
+        return Mono.zip(tasks, count)
+                .map(tuple -> new PagedResult<ProjectTaskDto>(tuple.getT1(), tuple.getT2(), page, size));
+    }
+
+/*
+    public Mono<PagedResult<ProjectTaskDto>> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
+        Query query = new Query();
+        if (!StringUtils.isEmpty(filterDto.getTitle())) {
+            query.addCriteria(Criteria.where("title").regex(filterDto.getTitle(), "i"));
+        }
+        if (!StringUtils.isEmpty(filterDto.getDescription())) {
+            query.addCriteria(Criteria.where("description").regex(filterDto.getDescription(), "i"));
+        }
+        if (filterDto.getPriority() != null) {
+            query.addCriteria(Criteria.where("priority").is(filterDto.getPriority()));
+        }
+        if (filterDto.getTaskType() != null) {
+            query.addCriteria(Criteria.where("taskType").is(filterDto.getTaskType()));
+        }
+        if (!StringUtils.isEmpty(filterDto.getProjectId())) {
             query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
         }
-        if (!StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId()) ) {
+        if (!StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
             query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()).and("createdProject.id").is(filterDto.getProjectId()));
         }
-        if (!StringUtils.isEmpty(filterDto.getAssigneeId()) ) {
+        if (!StringUtils.isEmpty(filterDto.getAssigneeId())) {
             query.addCriteria(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
         }
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -185,7 +245,7 @@ public class ProjectTaskService {
         return Mono.zip(tasks, count)
                 .map(tuple -> new PagedResult<ProjectTaskDto>(tuple.getT1(), tuple.getT2(), page, size));
     }
-
+*/
 
     private Mono<Backlog> ensureBacklog(String projectId, CreatedBy user, CreatedProject project) {
         return backlogRepository.findByCreatedProjectId(projectId)

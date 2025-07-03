@@ -37,6 +37,6 @@ public class ProjectTaskController {
             @RequestBody ProjectTaskFltreRequestDto filterDto,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return projectTaskService.filterTasks(filterDto, page, size);
+        return projectTaskService.getAllFilteredTasks(filterDto, page, size);
     }
 }
