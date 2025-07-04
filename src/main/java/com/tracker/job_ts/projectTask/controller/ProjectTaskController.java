@@ -71,7 +71,7 @@ public class ProjectTaskController {
      * @param newParentTaskId Yeni parent task'ın ID'si. Eğer null veya boş ise parent task kaldırılır.
      * @return Güncellenmiş görevin DTO'su
      */
-    @PutMapping("/{taskId}/parent")
+    @PutMapping("/parent/{taskId}")
     public Mono<ProjectTaskDto> updateTaskParent(
             @PathVariable String taskId,
             @RequestBody ProjectTaskRequestDto dto) { // newParentTaskId null olabilir
@@ -83,7 +83,7 @@ public class ProjectTaskController {
      * @param taskId Alt görevleri getirilecek olan parent görevin ID'si
      * @return Belirtilen parent task'a ait alt görevlerin bir listesi
      */
-    @GetMapping("/{taskId}/subtasks")
+    @GetMapping("/subtasks/{taskId}")
     public Flux<ProjectTaskDto> getSubtasks(@PathVariable String taskId) {
         return projectTaskService.getSubtasksByParentTaskId(taskId);
     }
