@@ -308,7 +308,27 @@ public class ProjectTaskService {
         return Mono.zip(tasks, count)
                 .map(tuple -> new PagedResult<ProjectTaskDto>(tuple.getT1(), tuple.getT2(), page, size));
     }
-
+    /**
+     * Belirli bir parent task ID'sine sahip tüm alt görevleri getirir.
+     * Kullanıcının bu görevlerin ait olduğu projelere erişim yetkisi olmalıdır.
+     *
+     * @param parentTaskId Alt görevleri getirilecek olan parent görevin ID'si
+     * @return Belirtilen parent task'a ait alt görevlerin bir listesi (ProjectTaskDto olarak)
+     */
+    public Flux<ProjectTaskDto> getSubtasksByParentTaskId(String parentTaskId) {
+        return authHelperService.getAuthUser()
+                .flatMapMany(user -> taskRepository.findById(parentTaskId) // Parent task'ın varlığını ve projeyi bul
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Parent task not found with ID: " + parentTaskId)))
+                        .flatMapMany(parentTask -> projectUserRepository.findByProjectIdAndUserId(parentTask.getCreatedProject().getId(), user.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of the project this parent task belongs to.")))
+                                .flatMapMany(projectUser -> {
+                                    // parentTaskId alanına göre filtreleme yaparak alt görevleri bul
+                                    return taskRepository.findByParentTaskId(parentTaskId)
+                                            .map(ProjectTaskDto::new);
+                                })
+                        )
+                );
+    }
 /*
     public Mono<PagedResult<ProjectTaskDto>> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
         Query query = new Query();

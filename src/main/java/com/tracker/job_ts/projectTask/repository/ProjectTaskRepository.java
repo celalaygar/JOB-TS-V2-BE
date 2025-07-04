@@ -9,4 +9,5 @@ import reactor.core.publisher.Flux;
 public interface ProjectTaskRepository extends ReactiveMongoRepository<ProjectTask, String> {
     Flux<ProjectTask> findByAssigneeId(int assigneeId);
     Flux<ProjectTask> findByCreatedProjectId(String projectId);
+    Flux<ProjectTask> findByParentTaskId(String parentTaskId);
 }
