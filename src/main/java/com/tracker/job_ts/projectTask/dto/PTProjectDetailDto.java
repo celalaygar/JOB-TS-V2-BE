@@ -1,11 +1,7 @@
 package com.tracker.job_ts.projectTask.dto;
 
 import com.tracker.job_ts.auth.entity.User;
-import com.tracker.job_ts.project.dto.ProjectUserDTO;
 import com.tracker.job_ts.project.entity.Project;
-import com.tracker.job_ts.project.entity.ProjectBacklog;
-import com.tracker.job_ts.project.entity.ProjectSprint;
-import com.tracker.job_ts.project.entity.ProjectTeam;
 import com.tracker.job_ts.project.model.CreatedBy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,11 +34,6 @@ public class PTProjectDetailDto {
     private String repository;
     private Integer sprintCount;
     private Integer milestoneCount;
-//    private List<ProjectSprint> recentSprints;
-//    private List<ProjectSprint> sprints;
-//    private List<ProjectTeam> projectTeams;
-//    private ProjectBacklog backlog;
-//    private ProjectUserDTO me;
 
     public PTProjectDetailDto(Project project) {
         this.id = project.getId();

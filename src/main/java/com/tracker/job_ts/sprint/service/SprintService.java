@@ -80,12 +80,9 @@ public class SprintService {
                                                                 SprintUser sprintUser = SprintUser.builder()
                                                                         .sprintId(savedSprint.getId())
                                                                         .projectId(dto.getProjectId())
-                                                                        .userId(authUser.getId())
-                                                                        .email(authUser.getEmail())
-                                                                        .firstname(authUser.getFirstname())
-                                                                        .lastname(authUser.getLastname())
-                                                                        .username(authUser.getUsername())
-                                                                        .addedAt(LocalDateTime.now())
+                                                                        .user(new CreatedBy(authUser))
+                                                                        .createdProject(new CreatedProject(project))
+                                                                        .createdAt(LocalDateTime.now())
                                                                         .build();
 
                                                                 return sprintUserRepository.save(sprintUser).thenReturn(savedSprint);
@@ -145,21 +142,15 @@ public class SprintService {
                 .map(pu -> SprintUser.builder()
                         .sprintId(sprintId)
                         .projectId(projectId)
-                        .userId(pu.getUserId())
-                        .email(pu.getEmail())
-                        .firstname(pu.getFirstname())
-                        .lastname(pu.getLastname())
-                        .username(pu.getUsername())
-                        .addedAt(LocalDateTime.now())
+                        .user(new CreatedBy(pu))
+                        .createdProject(new CreatedProject(pu.getProjectId(), null))
                         .build())
                 .collectList()
                 .flatMapMany(sprintUserRepository::saveAll)
                 .then();
     }
 
-    public Mono<Void> removeUserFromSprint(String sprintId, String userId) {
-        return sprintUserRepository.deleteBySprintIdAndUserId(sprintId, userId);
-    }
+
 
 
     public Mono<Void> deleteSprint(String sprintId) {
@@ -185,7 +176,7 @@ public class SprintService {
     public Flux<SprintDto> getAll() {
         return authHelperService.getAuthUser()
                 .flatMapMany(authUser ->
-                        sprintUserRepository.findAllByUserId(authUser.getId())
+                        sprintUserRepository.findByUserId(authUser.getId())
                                 .map(SprintUser::getSprintId)
                                 .distinct()
                                 .collectList()

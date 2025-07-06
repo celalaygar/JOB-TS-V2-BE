@@ -42,8 +42,5 @@ public class Project {
     private String repository;
     private Integer sprintCount;
     private Integer milestoneCount;
-    private List<ProjectSprint> recentSprints;
-    private List<ProjectSprint> sprints;
     private List<ProjectTeam> projectTeams;
-    private ProjectBacklog backlog;
 }

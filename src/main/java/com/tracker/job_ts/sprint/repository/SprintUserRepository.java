@@ -6,12 +6,12 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+
 @Repository
 public interface SprintUserRepository extends ReactiveMongoRepository<SprintUser, String> {
     Flux<SprintUser> findBySprintId(String sprintId);
-    Flux<SprintUser> findAllByUserId(String userId);
-
-    Mono<Void> deleteBySprintIdAndUserId(String sprintId, String userId);
-    Mono<Boolean> existsBySprintIdAndUserId(String sprintId, String userId);
     Mono<SprintUser> findBySprintIdAndUserId(String sprintId, String userId);
+    Flux<SprintUser> findByUserId( String userId); // Bu metodun adını findByUserId olarak düzeltmek daha mantıklı olabilir.
+    Flux<SprintUser> findByCreatedProjectId(String projectId); // createdProject.id alanı üzerinden arama yapacaktır.
+    Flux<SprintUser> findBySprintIdAndProjectId(String sprintId, String projectId);
 }

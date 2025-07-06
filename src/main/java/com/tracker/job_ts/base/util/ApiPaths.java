@@ -5,6 +5,7 @@ public class ApiPaths {
     private static final String PROJECTS_PATH = "/projects";
     private static final String SPRINT_PATH = "/sprint";
     private static final String PROJECT_TASK_PATH = "/project-task";
+    private static final String SPRINT_USER_PATH = "/sprint-user";
 
     public static final class ProjectsCtrl {
         public static final String CTRL = BASE_PATH_V2 + PROJECTS_PATH;
@@ -16,5 +17,9 @@ public class ApiPaths {
 
     public static final class ProjectTaskCtrl {
         public static final String CTRL = BASE_PATH_V2 + PROJECT_TASK_PATH;
+    }
+
+    public static final class SprintUserCtrl {
+        public static final String CTRL = BASE_PATH_V2 + SPRINT_USER_PATH;
     }
 }

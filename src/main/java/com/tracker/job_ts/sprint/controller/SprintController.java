@@ -65,11 +65,4 @@ public class SprintController {
                 .thenReturn(ResponseEntity.ok().build());
     }
 
-    @DeleteMapping("/{sprintId}/users/{userId}")
-    public Mono<ResponseEntity<Void>> removeUserFromSprint(
-            @PathVariable String sprintId,
-            @PathVariable String userId ) {
-        return sprintService.removeUserFromSprint(sprintId, userId)
-                .thenReturn(ResponseEntity.noContent().build());
-    }
 }
