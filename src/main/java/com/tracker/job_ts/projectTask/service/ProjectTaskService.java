@@ -16,6 +16,7 @@ import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
+import com.tracker.job_ts.projectTask.model.ParentTask;
 import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
 import com.tracker.job_ts.projectTask.model.ProjectTaskSystemStatus;
 import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
@@ -69,54 +70,62 @@ public class ProjectTaskService {
                                                     CreatedProject createdProject = new CreatedProject(project);
                                                     CreatedBy createdBy = new CreatedBy(user);
 
-                                                    // Parent Task kontrolü
-                                                    Mono<Void> parentTaskCheck = Mono.empty();
+                                                    // Parent Task Kontrolü ve Set Etme
+                                                    Mono<Optional<ProjectTask>> parentTaskMono = Mono.just(Optional.empty()); // Varsayılan olarak boş
                                                     if (dto.getParentTaskId() != null && !dto.getParentTaskId().isEmpty()) {
-                                                        parentTaskCheck = taskRepository.findById(dto.getParentTaskId())
-                                                                .flatMap(parentTask -> {
-                                                                    if (!parentTask.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                        parentTaskMono = taskRepository.findById(dto.getParentTaskId())
+                                                                .flatMap(parent -> {
+                                                                    if (!parent.getCreatedProject().getId().equals(dto.getProjectId())) {
                                                                         return Mono.error(new IllegalArgumentException("Parent task must belong to the same project."));
                                                                     }
-                                                                    return Mono.just(parentTask);
+                                                                    return Mono.just(Optional.of(parent));
                                                                 })
-                                                                .switchIfEmpty(Mono.empty()).then();
+                                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Parent task not found with ID: " + dto.getParentTaskId()))); // Parent task bulunamazsa hata fırlat
                                                     }
 
-                                                    return parentTaskCheck.then(taskMapper.toEntity(dto).flatMap(task -> {
-                                                        task.setTaskNumber(GenerationCode.generateProjectCode(GenerationCode.TASK, dto.getTitle()));
-                                                        task.setCreatedBy(createdBy);
-                                                        task.setAssignee(assignee);
-                                                        task.setCreatedProject(createdProject);
-                                                        task.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
-                                                        task.setProjectTaskStatus(new ProjectTaskStatusModel(status));
-                                                        task.setCreatedAt(Instant.now().toString());
-                                                        task.setParentTaskId(dto.getParentTaskId()); // ParentTaskId'yi set et
+                                                    return parentTaskMono.flatMap(optionalParentTask ->
+                                                            taskMapper.toEntity(dto).flatMap(task -> {
+                                                                task.setTaskNumber(GenerationCode.generateProjectCode(GenerationCode.TASK, dto.getTitle()));
+                                                                task.setCreatedBy(createdBy);
+                                                                task.setAssignee(assignee);
+                                                                task.setCreatedProject(createdProject);
+                                                                task.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
+                                                                task.setProjectTaskStatus(new ProjectTaskStatusModel(status));
+                                                                task.setCreatedAt(Instant.now().toString()); // LocalDateTime.now() daha iyi olur
+                                                                task.setParentTaskId(dto.getParentTaskId()); // ParentTaskId'yi set et
 
-                                                        if (dto.getSprintId() != null) {
-                                                            return sprintRepository.findById(dto.getSprintId())
-                                                                    .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
-                                                                    .flatMap(sprint -> {
-                                                                        if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
-                                                                            task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
-                                                                            return taskRepository.save(task).map(ProjectTaskDto::new);
-                                                                        } else {
-                                                                            return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
-                                                                        }
-                                                                    });
-                                                        } else {
-                                                            return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
-                                                                    .flatMap(backlog -> {
-                                                                        task.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
-                                                                        return taskRepository.save(task).map(ProjectTaskDto::new);
-                                                                    });
-                                                        }
-                                                    }));
+                                                                // Eğer bir parent task varsa, parentTask objesini set et
+                                                                optionalParentTask.ifPresent(parent ->
+                                                                        task.setParentTask(new ParentTask(parent))
+                                                                );
+
+                                                                if (dto.getSprintId() != null) {
+                                                                    return sprintRepository.findById(dto.getSprintId())
+                                                                            .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
+                                                                            .flatMap(sprint -> {
+                                                                                if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
+                                                                                    task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                                                    return taskRepository.save(task).map(ProjectTaskDto::new);
+                                                                                } else {
+                                                                                    return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
+                                                                                }
+                                                                            });
+                                                                } else {
+                                                                    return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
+                                                                            .flatMap(backlog -> {
+                                                                                task.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
+                                                                                return taskRepository.save(task).map(ProjectTaskDto::new);
+                                                                            });
+                                                                }
+                                                            })
+                                                    );
                                                 })
                                         )
                                 )
                         )
                 );
     }
+
 
     public Mono<ProjectTaskDto> updateTask(String taskId, ProjectTaskRequestDto dto) {
         return authHelperService.getAuthUser()
@@ -135,29 +144,25 @@ public class ProjectTaskService {
                                                             CreatedProject createdProject = new CreatedProject(project);
                                                             CreatedBy createdBy = new CreatedBy(user);
 
-                                                            // Parent Task kontrolü
-                                                            Mono<Void> parentTaskCheck = Mono.empty();
+                                                            // Parent Task Kontrolü ve Set Etme
+                                                            Mono<Optional<ProjectTask>> parentTaskMono = Mono.just(Optional.empty()); // Varsayılan olarak boş
                                                             if (dto.getParentTaskId() != null && !dto.getParentTaskId().isEmpty()) {
                                                                 // Kendini parent olarak atamaya çalışma kontrolü
                                                                 if (dto.getParentTaskId().equals(existingTask.getId())) {
                                                                     return Mono.error(new IllegalArgumentException("A task cannot be its own parent."));
                                                                 }
-                                                                if (dto.getParentTaskId() != null && !dto.getParentTaskId().isEmpty()) {
-                                                                    parentTaskCheck = taskRepository.findById(dto.getParentTaskId())
-                                                                            .flatMap(parentTask -> {
-                                                                                if (!parentTask.getCreatedProject().getId().equals(dto.getProjectId())) {
-                                                                                    return Mono.error(new IllegalArgumentException("Parent task must belong to the same project."));
-                                                                                }
-                                                                                return Mono.just(parentTask);
-                                                                            })
-                                                                            .switchIfEmpty(Mono.empty()).then();
-                                                                }
-                                                            } else {
-                                                                // ParentTaskId'si null veya boş ise, mevcut task'ın parentTaskId'sini de null yap
-                                                                existingTask.setParentTaskId(null);
+                                                                parentTaskMono = taskRepository.findById(dto.getParentTaskId())
+                                                                        .flatMap(parent -> {
+                                                                            if (!parent.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                                                return Mono.error(new IllegalArgumentException("Parent task must belong to the same project."));
+                                                                            }
+                                                                            return Mono.just(Optional.of(parent));
+                                                                        })
+                                                                        .switchIfEmpty(Mono.error(new NoSuchElementException("Parent task not found with ID: " + dto.getParentTaskId()))); // Parent task bulunamazsa hata fırlat
                                                             }
 
-                                                            return parentTaskCheck.then(Mono.defer(() -> {
+
+                                                            return parentTaskMono.flatMap(optionalParentTask -> Mono.defer(() -> {
                                                                 existingTask.setTitle(dto.getTitle());
                                                                 existingTask.setDescription(dto.getDescription());
                                                                 existingTask.setPriority(dto.getPriority());
@@ -168,6 +173,15 @@ public class ProjectTaskService {
                                                                 existingTask.setCreatedBy(createdBy);
                                                                 existingTask.setProjectTaskStatus(new ProjectTaskStatusModel(status));
                                                                 existingTask.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
+
+                                                                // Eğer bir parent task varsa, parentTask objesini set et
+                                                                // Eğer parentTaskId null/boş ise, parentTask alanını da null yap
+                                                                if (optionalParentTask.isPresent()) {
+                                                                    existingTask.setParentTask(new ParentTask(optionalParentTask.get()));
+                                                                } else if (dto.getParentTaskId() == null || dto.getParentTaskId().isEmpty()) {
+                                                                    existingTask.setParentTask(null);
+                                                                }
+
 
                                                                 if (dto.getSprintId() != null) {
                                                                     return sprintRepository.findById(dto.getSprintId())
@@ -204,7 +218,7 @@ public class ProjectTaskService {
                         .flatMap(existingTask -> projectUserRepository.findByProjectIdAndUserId(existingTask.getCreatedProject().getId(), user.getId())
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of the project this task belongs to.")))
                                 .flatMap(projectUser -> {
-                                    Mono<Void> parentTaskCheck = Mono.empty();
+                                    Mono<Optional<ProjectTask>> parentTaskMono = Mono.just(Optional.empty());
 
                                     if (dto.getParentTaskId() != null && !dto.getParentTaskId().isEmpty()) {
                                         // Kendini parent olarak atamaya çalışma kontrolü
@@ -212,20 +226,25 @@ public class ProjectTaskService {
                                             return Mono.error(new IllegalArgumentException("A task cannot be its own parent."));
                                         }
 
-                                        if (dto.getParentTaskId() != null && !dto.getParentTaskId().isEmpty()) {
-                                            parentTaskCheck = taskRepository.findById(dto.getParentTaskId())
-                                                    .flatMap(parentTask -> {
-                                                        if (!parentTask.getCreatedProject().getId().equals(dto.getProjectId())) {
-                                                            return Mono.error(new IllegalArgumentException("Parent task must belong to the same project."));
-                                                        }
-                                                        return Mono.just(parentTask);
-                                                    })
-                                                    .switchIfEmpty(Mono.empty()).then();
-                                        }
+                                        parentTaskMono = taskRepository.findById(dto.getParentTaskId())
+                                                .flatMap(parentTask -> {
+                                                    if (!parentTask.getCreatedProject().getId().equals(existingTask.getCreatedProject().getId())) { // Proje kontrolü
+                                                        return Mono.error(new IllegalArgumentException("Parent task must belong to the same project."));
+                                                    }
+                                                    return Mono.just(Optional.of(parentTask));
+                                                })
+                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Parent task not found with ID: " + dto.getParentTaskId())));
                                     }
 
-                                    return parentTaskCheck.then(Mono.defer(() -> {
+                                    return parentTaskMono.flatMap(optionalParentTask -> Mono.defer(() -> {
                                         existingTask.setParentTaskId(dto.getParentTaskId());
+                                        // Eğer bir parent task varsa, parentTask objesini set et
+                                        // Eğer parentTaskId null/boş ise, parentTask alanını da null yap
+                                        if (optionalParentTask.isPresent()) {
+                                            existingTask.setParentTask(new ParentTask(optionalParentTask.get()));
+                                        } else if (dto.getParentTaskId() == null || dto.getParentTaskId().isEmpty()) {
+                                            existingTask.setParentTask(null);
+                                        }
                                         return taskRepository.save(existingTask).map(ProjectTaskDto::new);
                                     }));
                                 })

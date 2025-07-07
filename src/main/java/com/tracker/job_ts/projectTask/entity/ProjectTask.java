@@ -4,10 +4,7 @@ import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
-import com.tracker.job_ts.projectTask.model.ProjectTaskPriority;
-import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
-import com.tracker.job_ts.projectTask.model.ProjectTaskSystemStatus;
-import com.tracker.job_ts.projectTask.model.ProjectTaskType;
+import com.tracker.job_ts.projectTask.model.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,5 +36,5 @@ public class ProjectTask {
     private CreatedBy createdBy;
     private CreatedBy assignee;
     private CreatedProject createdProject;
-
+    private ParentTask parentTask;
 }

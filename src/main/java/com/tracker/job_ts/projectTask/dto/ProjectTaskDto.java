@@ -7,10 +7,7 @@ import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.entity.ProjectTaskComment;
-import com.tracker.job_ts.projectTask.model.ProjectTaskPriority;
-import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
-import com.tracker.job_ts.projectTask.model.ProjectTaskSystemStatus;
-import com.tracker.job_ts.projectTask.model.ProjectTaskType;
+import com.tracker.job_ts.projectTask.model.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +36,7 @@ public class ProjectTaskDto {
     private CreatedBy assignee;
     private ProjectTaskStatusModel projectTaskStatus;
     private CreatedProject createdProject;
+    private ParentTask parentTask;
 
     public ProjectTaskDto(ProjectTask entity) {
         this.id = entity.getId();
@@ -55,6 +53,7 @@ public class ProjectTaskDto {
         this.assignee = entity.getAssignee();
         this.projectTaskStatus = entity.getProjectTaskStatus();
         this.createdProject = entity.getCreatedProject();
+        this.parentTask=entity.getParentTask();
     }
 
     public ProjectTaskDto(ProjectTask entity, Project project) {
@@ -72,5 +71,6 @@ public class ProjectTaskDto {
         this.assignee = entity.getAssignee();
         this.projectTaskStatus = entity.getProjectTaskStatus();
         this.createdProject = new CreatedProject(project);
+        this.parentTask=entity.getParentTask();
     }
 }
