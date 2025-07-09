@@ -51,6 +51,7 @@ public class SprintController {
     public Flux<SprintDto> getAll() {
         return sprintService.getAll();
     }
+
     @GetMapping("/non-completed/project/{projectId}")
     public Flux<SprintDto> getNonCompletedSprintsByProject(@PathVariable String projectId) {
         return sprintService.getNonCompletedSprintsByProjectId(projectId);

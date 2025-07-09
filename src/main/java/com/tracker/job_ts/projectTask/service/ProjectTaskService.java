@@ -6,6 +6,7 @@ import com.tracker.job_ts.backlog.entity.Backlog;
 import com.tracker.job_ts.backlog.repository.BacklogRepository;
 import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.project.entity.Project;
+import com.tracker.job_ts.project.model.AssaignBacklog;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
@@ -105,6 +106,7 @@ public class ProjectTaskService {
                                                                             .flatMap(sprint -> {
                                                                                 if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
                                                                                     task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                                                    task.setBacklog(null);
                                                                                     return taskRepository.save(task).map(ProjectTaskDto::new);
                                                                                 } else {
                                                                                     return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
@@ -113,7 +115,8 @@ public class ProjectTaskService {
                                                                 } else {
                                                                     return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
                                                                             .flatMap(backlog -> {
-                                                                                task.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
+                                                                                task.setSprint(null);
+                                                                                task.setBacklog(new AssaignBacklog(backlog.getId(), backlog.getName()));
                                                                                 return taskRepository.save(task).map(ProjectTaskDto::new);
                                                                             });
                                                                 }
@@ -189,6 +192,7 @@ public class ProjectTaskService {
                                                                             .flatMap(sprint -> {
                                                                                 if (sprint.getSprintStatus() == SprintStatus.ACTIVE || sprint.getSprintStatus() == SprintStatus.PLANNED) {
                                                                                     existingTask.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                                                    existingTask.setBacklog(null);
                                                                                     return taskRepository.save(existingTask).map(ProjectTaskDto::new);
                                                                                 } else {
                                                                                     return Mono.error(new IllegalStateException("Sprint must be ACTIVE or PLANNED."));
@@ -197,7 +201,8 @@ public class ProjectTaskService {
                                                                 } else {
                                                                     return ensureBacklog(dto.getProjectId(), createdBy, createdProject)
                                                                             .flatMap(backlog -> {
-                                                                                existingTask.setSprint(new AssaignSprint(backlog.getId(), backlog.getName()));
+                                                                                existingTask.setBacklog(new AssaignBacklog(backlog.getId(), backlog.getName()));
+                                                                                existingTask.setSprint(null);
                                                                                 return taskRepository.save(existingTask).map(ProjectTaskDto::new);
                                                                             });
                                                                 }

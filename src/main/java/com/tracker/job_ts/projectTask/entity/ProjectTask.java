@@ -1,6 +1,7 @@
 package com.tracker.job_ts.projectTask.entity;
 
 import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.project.model.AssaignBacklog;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
@@ -29,6 +30,7 @@ public class ProjectTask {
     private ProjectTaskPriority priority;
     private ProjectTaskType taskType;
     private AssaignSprint sprint;
+    private AssaignBacklog backlog;
     private String createdAt;
     private ProjectTaskStatusModel projectTaskStatus;
     //private List<ProjectTaskComment> comments;

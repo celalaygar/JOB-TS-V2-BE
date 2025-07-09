@@ -5,14 +5,19 @@ import com.tracker.job_ts.project.dto.ProjectDto;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.entity.ProjectTaskStatus;
 import com.tracker.job_ts.project.entity.ProjectUser;
+import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.project.model.ProjectSystemStatus;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
+import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.entity.ProjectTask;
+import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
 import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
+import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.entity.SprintStatus;
 import com.tracker.job_ts.sprint.entity.SprintUser;
@@ -38,6 +43,7 @@ public class SprintService {
     private final ProjectTaskStatusRepository taskStatusRepository;
     private final AuthHelperService authHelperService;
     private final SprintValidator validator;
+    private final ProjectTaskRepository projectTaskRepository;
 
     private final ProjectRepository projectRepository;
 
@@ -151,8 +157,6 @@ public class SprintService {
     }
 
 
-
-
     public Mono<Void> deleteSprint(String sprintId) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser ->
@@ -186,6 +190,7 @@ public class SprintService {
                                 })
                 );
     }
+
     public Mono<SprintDto> getById(String sprintId) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser ->
@@ -198,6 +203,7 @@ public class SprintService {
                                 )
                 );
     }
+
     public Flux<SprintDto> getNonCompletedSprintsByProjectId(String projectId) {
         return authHelperService.getAuthUser()
                 .flatMapMany(authUser ->
@@ -209,4 +215,130 @@ public class SprintService {
                                 )
                 );
     }
+
+    /**
+     * Belirli bir sprint ve projeye ait tüm görevleri getirir.
+     * Kullanıcının ilgili projenin ve sprint'in üyesi olması gerekmektedir.
+     *
+     * @param sprintId  Görevleri getirilecek sprint'in ID'si
+     * @param projectId Görevlerin ait olduğu projenin ID'si
+     * @return Sprint'e atanmış görevlerin DTO'ları (Flux olarak)
+     */
+    public Flux<ProjectTaskDto> getProjectTasksBySprintAndProject(SprintTaskRequestDto dto) {
+        return authHelperService.getAuthUser()
+                .flatMapMany(currentUser ->
+                        // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
+                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
+                                .flatMapMany(projectUser ->
+                                        // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
+                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
+                                                .flatMapMany(sprintUser ->
+                                                        // 3. Sprint'in varlığını doğrula (ve projenin sprint'e ait olduğunu kontrol et)
+                                                        sprintRepository.findById(dto.getSprintId())
+                                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
+                                                                .flatMapMany(sprint -> {
+                                                                    if (!sprint.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                                        return Mono.error(new IllegalArgumentException("Sprint with ID " + dto.getSprintId() + " does not belong to project with ID " + dto.getProjectId()));
+                                                                    }
+                                                                    // 4. Sprint'e ve projeye atanmış görevleri bul
+                                                                    return projectTaskRepository.findBySprintIdAndCreatedProjectId(dto.getSprintId(), dto.getProjectId()).map(ProjectTaskDto::new);
+                                                                })
+                                                )
+                                )
+                );
+    }
+
+    /**
+     * Belirli bir görevi sprint'e atar.
+     * Kullanıcının ilgili projenin ve sprint'in üyesi olması ve görevin projeye ait olması gerekmektedir.
+     *
+     * @param sprintId  Görevin atanacağı sprint'in ID'si
+     * @param projectId Görevin ait olduğu projenin ID'si
+     * @param taskId    Atanacak görevin ID'si
+     * @return Güncellenmiş ProjectTask
+     */
+    public Mono<ProjectTaskDto> addTaskToSprint(SprintTaskRequestDto dto) {
+        return authHelperService.getAuthUser()
+                .flatMap(currentUser ->
+                        // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
+                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
+                                .flatMap(projectUser ->
+                                        // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
+                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
+                                                .flatMap(sprintUser ->
+                                                        // 3. Sprint'in varlığını doğrula
+                                                        sprintRepository.findById(dto.getSprintId())
+                                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
+                                                                .flatMap(sprint -> {
+                                                                    // Sprint'in ilgili projeye ait olduğunu kontrol et
+                                                                    if (!sprint.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                                        return Mono.error(new IllegalArgumentException("Sprint with ID " + dto.getSprintId() + " does not belong to project with ID " + dto.getProjectId()));
+                                                                    }
+                                                                    // 4. Görevin varlığını ve ilgili projeye ait olduğunu doğrula
+                                                                    return projectTaskRepository.findById(dto.getTaskId())
+                                                                            .switchIfEmpty(Mono.error(new NoSuchElementException("Project Task not found with ID: " + dto.getTaskId())))
+                                                                            .flatMap(task -> {
+                                                                                if (!task.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                                                    return Mono.error(new IllegalArgumentException("Task with ID " + dto.getTaskId() + " does not belong to project with ID " + dto.getProjectId()));
+                                                                                }
+                                                                                // 5. Görev zaten bu sprint'e atanmış mı kontrol et
+                                                                                if (task.getSprint() != null && task.getSprint().getId().equals(dto.getSprintId())) {
+                                                                                    return Mono.error(new IllegalArgumentException("Task with ID " + dto.getTaskId() + " is already assigned to sprint " + dto.getSprintId()));
+                                                                                }
+                                                                                // 6. Görevi sprint'e ata ve kaydet
+                                                                                task.setSprint(new AssaignSprint(sprint.getId(), sprint.getName()));
+                                                                                return projectTaskRepository.save(task).map(ProjectTaskDto::new);
+                                                                            });
+                                                                })
+                                                )
+                                )
+                );
+    }
+
+    /**
+     * Belirli bir görevi sprint'ten çıkartır.
+     * Kullanıcının ilgili projenin ve sprint'in üyesi olması ve görevin projeye ait olması gerekmektedir.
+     *
+     * @param dto.getTaskId()  Görevin çıkarılacağı sprint'in ID'si
+     * @param projectId Görevin ait olduğu projenin ID'si
+     * @param taskId    Çıkartılacak görevin ID'si
+     * @return Güncellenmiş ProjectTask
+     */
+    public Mono<ProjectTaskDto> removeTaskFromSprint(SprintTaskRequestDto dto) {
+        return authHelperService.getAuthUser()
+                .flatMap(currentUser ->
+                        // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
+                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
+                                .flatMap(projectUser ->
+                                        // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
+                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                                .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
+                                                .flatMap(sprintUser ->
+                                                        // 3. Sprint'in varlığını doğrula
+                                                        sprintRepository.findById(dto.getSprintId())
+                                                                .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
+                                                                .flatMap(sprint -> {
+                                                                    // Sprint'in ilgili projeye ait olduğunu kontrol et
+                                                                    if (!sprint.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                                                        return Mono.error(new IllegalArgumentException("Sprint with ID " + dto.getSprintId() + " does not belong to project with ID " + dto.getProjectId()));
+                                                                    }
+                                                                    // 4. Görevin varlığını ve ilgili projeye ve sprint'e ait olduğunu doğrula
+                                                                    return projectTaskRepository.findByIdAndSprintIdAndCreatedProjectId(dto.getTaskId(), dto.getSprintId(), dto.getProjectId())
+                                                                            .switchIfEmpty(Mono.error(new NoSuchElementException("Project Task with ID " + dto.getTaskId() + " not found in sprint " + dto.getSprintId() + " or project " + dto.getProjectId())))
+                                                                            .flatMap(task -> {
+                                                                                // 5. Görevi sprint'ten çıkar (AssaignSprint alanını null yap)
+                                                                                task.setSprint(null);
+                                                                                return projectTaskRepository.save(task).map(ProjectTaskDto::new);
+                                                                            });
+                                                                })
+                                                )
+                                )
+                );
+    }
+
 }
