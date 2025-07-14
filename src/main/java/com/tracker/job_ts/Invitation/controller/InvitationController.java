@@ -3,9 +3,11 @@ package com.tracker.job_ts.Invitation.controller;
 import com.tracker.job_ts.Invitation.dto.InvitationRequestDto;
 import com.tracker.job_ts.Invitation.dto.InviteToProjectRequestDto;
 import com.tracker.job_ts.Invitation.entity.Invitation;
+import com.tracker.job_ts.Invitation.entity.InvitationStatus;
 import com.tracker.job_ts.Invitation.service.InvitationService;
 import com.tracker.job_ts.base.util.ApiPaths;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -41,5 +43,10 @@ public class InvitationController {
     @PostMapping("/all-by-projectId")
     public Flux<Invitation> getAllByProjectId(@RequestBody InvitationRequestDto dto) {
         return invitationService.getAllInvitationByProjectId(dto);
+    }
+    @GetMapping("/count/{status}")
+    @ResponseStatus(HttpStatus.OK)
+    public Mono<Long> getInvitationCountByStatus(@PathVariable InvitationStatus status) {
+        return invitationService.countInvitationsForAuthUserByStatus(status);
     }
 }

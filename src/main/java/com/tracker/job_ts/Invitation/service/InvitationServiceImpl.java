@@ -109,13 +109,6 @@ public class InvitationServiceImpl implements InvitationService {
 
 
     @Override
-    public Flux<Invitation> getPendingInvitationsForAuthUser() {
-        return authHelperService.getAuthUser()
-                .flatMapMany(authUser -> invitationRepository.findByInvitedUserEmailAndStatus(
-                        authUser.getEmail(), InvitationStatus.PENDING));
-    }
-
-    @Override
     public Mono<Invitation> acceptInvitation(InvitationRequestDto dto) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> invitationRepository.findByIdAndInvitedUserEmail(dto.getInvitationId(), user.getEmail())
@@ -178,5 +171,24 @@ public class InvitationServiceImpl implements InvitationService {
                 );
     }
 
+    @Override
+    public Flux<Invitation> getPendingInvitationsForAuthUser() {
+        return authHelperService.getAuthUser()
+                .flatMapMany(authUser -> invitationRepository.findByInvitedUserEmailAndStatus(
+                        authUser.getEmail(), InvitationStatus.PENDING));
+    }
 
+    /**
+     * Yetkili kullanıcının belirli bir davet durumuna sahip davetiyelerinin sayısını döndürür.
+     *
+     * @param status Sayısı alınacak davetiyelerin durumu (örneğin PENDING, ACCEPTED, DECLINED)
+     * @return Davetiye sayısı
+     */
+    public Mono<Long> countInvitationsForAuthUserByStatus(InvitationStatus status) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser ->
+                        invitationRepository.findByInvitedUserEmailAndStatus(authUser.getEmail(), status)
+                                .count() // Flux'taki eleman sayısını Mono<Long> olarak döndürür
+                );
+    }
 }
