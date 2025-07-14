@@ -173,15 +173,7 @@ public class InvitationServiceImpl implements InvitationService {
 
                             invitation.setStatus(InvitationStatus.DECLINED);
 
-                            return invitationRepository.save(invitation)
-                                    .flatMap(saved -> {
-                                        String to = isInvitedUser
-                                                ? invitation.getInvitedBy().getEmail()
-                                                : invitation.getInvitedUser().getEmail();
-
-                                        return emailService.sendDeclineNotificationEmail(to, invitation.getProject().getName())
-                                                .thenReturn(saved);
-                                    });
+                            return invitationRepository.save(invitation);
                         })
                 );
     }
