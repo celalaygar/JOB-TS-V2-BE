@@ -90,7 +90,6 @@ public class AuthService {
                     newUser.setCreatedAt(LocalDateTime.now());
                     newUser.setUpdatedAt(LocalDateTime.now());
 
-                    System.out.println(newUser.toString());
                     return userRepository.save(newUser)
                             .flatMap(savedUser ->
                                     invitationRepository.findByTokenAndStatus(request.getToken(), InvitationStatus.PENDING)

@@ -21,16 +21,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public Mono<ResponseEntity<Object>> register(@RequestBody RegisterRequest request) {
-        System.out.println("register");
-        System.out.println(request.toString());
         return authService.register(request)
                 .map(msg -> ResponseEntity.ok(msg));
     }
 
     @PostMapping("/login")
     public Mono<ResponseEntity<AuthResponse>> login(@RequestBody AuthRequest request) {
-        System.out.println("login");
-        System.out.println(request.toString());
         return authService.login(request)
                 .map(ResponseEntity::ok);
     }

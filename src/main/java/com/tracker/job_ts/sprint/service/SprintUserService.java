@@ -113,7 +113,6 @@ public class SprintUserService {
                                                         sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), userId)
                                                                 .flatMap(existing -> {
                                                                     // Kullanıcı zaten ekliyse atla (hata fırlatma)
-                                                                    System.out.println("User " + userId + " already assigned to sprint " + dto.getSprintId() + ". Skipping.");
                                                                     return Mono.<SprintUserDto>empty(); // Tipi açıkça belirtildi
                                                                 })
                                                                 .switchIfEmpty(Mono.defer(() ->
@@ -134,7 +133,6 @@ public class SprintUserService {
                                                                                 })
                                                                                 .onErrorResume(NoSuchElementException.class, e -> {
                                                                                     // Kullanıcı projede yoksa atla (hata fırlatma)
-                                                                                    System.out.println("User " + userId + " is not a member of project " + dto.getProjectId() + ". Skipping.");
                                                                                     return Mono.<SprintUserDto>empty(); // Tipi açıkça belirtildi
                                                                                 })
                                                                 ))
