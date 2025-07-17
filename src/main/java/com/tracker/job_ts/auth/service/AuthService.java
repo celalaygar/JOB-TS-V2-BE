@@ -10,6 +10,7 @@ import com.tracker.job_ts.auth.dto.AuthResponse;
 import com.tracker.job_ts.auth.dto.RegisterRequest;
 import com.tracker.job_ts.auth.entity.SystemRole;
 import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.auth.exception.UnauthorizedException;
 import com.tracker.job_ts.auth.mapper.RegisterRequestToUserMapper;
 import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.project.entity.ProjectUser;
@@ -58,10 +59,10 @@ public class AuthService {
 
     public Mono<AuthResponse> login(AuthRequest request) {
         return userRepository.findByEmail(request.getEmail())
-                .switchIfEmpty(Mono.error(new RuntimeException("Invalid User Email or Password")))
+                .switchIfEmpty(Mono.error(new UnauthorizedException("Invalid User Email or Password")))
                 .flatMap(user -> {
                     if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                        return Mono.error(new RuntimeException("Invalid credentials"));
+                        return Mono.error(new UnauthorizedException("Invalid credentials."));
                     }
 
                     List<SystemRole> roles = user.getSystemRoles().stream().collect(Collectors.toList());

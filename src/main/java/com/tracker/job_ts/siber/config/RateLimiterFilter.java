@@ -3,6 +3,7 @@ package com.tracker.job_ts.siber.config;
 import com.tracker.job_ts.siber.dto.RateLimitClientDto;
 import com.tracker.job_ts.siber.entity.RateLimit;
 import com.tracker.job_ts.siber.repository.RateLimitRepository;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -14,13 +15,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
+@Order(3)
 @Component
 public class RateLimiterFilter implements WebFilter {
 
     private final RateLimitRepository rateLimitRepository;
 
     private static final int DEFAULT_MAX_REQUESTS = 5128;
-    private static final int AUTH_MAX_REQUESTS = 5;
+    private static final int AUTH_MAX_REQUESTS = 5555;
     private static final Duration WINDOW = Duration.ofSeconds(60);
 
     // Hedeflenen path'ler
