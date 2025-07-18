@@ -31,7 +31,7 @@ public class RequestResponseLoggingFilter implements WebFilter {
     private static final String TRACE_ID_HEADER = "X-Trace-ID"; // Trace ID için özel header adı
 
     private final LoggingService loggingService;
-    private final JWTProvider jwtUtil;
+    private final JWTProvider jwtProvider;
     // private final UserRepository userRepository; // Eğer getAuthUser() kullanılıyorsa aktif edin
 
     @Override
@@ -62,8 +62,8 @@ public class RequestResponseLoggingFilter implements WebFilter {
             apiLog.setToken(token); // Token'ı kaydet
             try {
                 // Token geçerliyse email'i al
-                if (jwtUtil.validateToken(token)) {
-                    String email = jwtUtil.getUsernameFromToken(token);
+                if (jwtProvider.validateToken(token)) {
+                    String email = jwtProvider.getUsernameFromToken(token);
                     apiLog.setEmail(email); // Email'i kaydet
                     apiLog.setAuthenticatedUser(email); // AuthenticatedUser olarak email'i kullan
                 } else {
@@ -90,7 +90,7 @@ public class RequestResponseLoggingFilter implements WebFilter {
 
                     String requestBody = new String(requestBodyBytes, StandardCharsets.UTF_8);
                     apiLog.setRequestBody(requestBody);
-                    System.out.println("Request Body Yakalandı (Filter): " + requestBody); // Debug log
+
 
                     // İstek gövdesini yeniden akışa veren bir ServerHttpRequestDecorator oluşturulur.
                     ServerHttpRequest decoratedRequest = new ServerHttpRequestDecorator(request) {
@@ -116,8 +116,6 @@ public class RequestResponseLoggingFilter implements WebFilter {
 
                                         String responseBody = new String(responseBodyBytes, StandardCharsets.UTF_8);
                                         apiLog.setResponseBody(responseBody);
-                                        System.out.println("Response Body Yakalandı (Filter): " + responseBody); // Debug log
-
                                         // Orijinal yanıt akışını devam ettir.
                                         return super.writeWith(Mono.just(bufferFactory.wrap(responseBodyBytes)));
                                     });

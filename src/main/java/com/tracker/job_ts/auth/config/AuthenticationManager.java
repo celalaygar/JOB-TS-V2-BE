@@ -16,22 +16,22 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AuthenticationManager implements ReactiveAuthenticationManager {
 
-    private final JWTProvider jwtUtil;
+    private final JWTProvider jwtProvider;
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
         String authToken = authentication.getCredentials().toString();
-        String email = jwtUtil.getUsernameFromToken(authToken);
+        String email = jwtProvider.getUsernameFromToken(authToken);
 
-        return Mono.just(jwtUtil.validateToken(authToken))
+        return Mono.just(jwtProvider.validateToken(authToken))
                 .filter(valid -> valid)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid token")))
                 .map(valid -> {
-                    List<String> roles = jwtUtil.getClaims(authToken).get("roles", List.class);
+                    //List<String> roles = jwtProvider.getClaims(authToken).get("roles", List.class);
                     return new UsernamePasswordAuthenticationToken(
                             email,
                             null,
-                            jwtUtil.getAuthorities(authToken)
+                            jwtProvider.getAuthorities(authToken)
                     );
                 });
     }
