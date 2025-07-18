@@ -1,36 +1,11 @@
 package com.tracker.job_ts.auth.config;
 
-import com.tracker.job_ts.auth.exception.*;
-import com.tracker.job_ts.logging.service.RequestLoggingService;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.core.annotation.Order;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.ReactiveSecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
-@Component
-@Order(1)
-@RequiredArgsConstructor
-public class JWTFilter implements WebFilter {
-
+//@Component
+//@Order(1)
+//@RequiredArgsConstructor
+public class JWTFilter // implements WebFilter
+{
+/*
     private final JWTProvider jwtProvider;
     private final RequestLoggingService requestLoggingService;
 
@@ -153,5 +128,5 @@ public class JWTFilter implements WebFilter {
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         return exchange.getResponse().writeWith(Mono.just(buffer));
-    }
+    }*/
 }

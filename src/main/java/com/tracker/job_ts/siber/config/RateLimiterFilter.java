@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
 
-@Order(3)
+@Order(2)
 @Component
 public class RateLimiterFilter implements WebFilter {
 

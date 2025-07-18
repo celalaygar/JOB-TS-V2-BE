@@ -1,4 +1,4 @@
-package com.tracker.job_ts.auth.config;
+package com.tracker.job_ts.base.config;
 
 
 import org.springframework.context.annotation.Bean;
