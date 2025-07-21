@@ -2,6 +2,7 @@ package com.tracker.job_ts.logging.filter;
 
 
 import com.tracker.job_ts.auth.config.JWTProvider;
+import com.tracker.job_ts.base.constant.HeaderConstant;
 import com.tracker.job_ts.logging.entity.ApiLog;
 import com.tracker.job_ts.logging.service.LoggingService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class RequestResponseLoggingFilter implements WebFilter {
 
         // Yanıt header'ına Trace ID ekle
         response.getHeaders().add(TRACE_ID_HEADER, traceId);
-        String clientIp = request.getHeaders().getFirst("X-Client-IP");
+        String clientIp = request.getHeaders().getFirst(HeaderConstant.X_CLIENT_IP);
 
         ApiLog apiLog = new ApiLog();
         apiLog.setClientIp(clientIp!= null ? clientIp : "unknown");

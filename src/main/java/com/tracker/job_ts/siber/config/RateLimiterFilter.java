@@ -1,5 +1,6 @@
 package com.tracker.job_ts.siber.config;
 
+import com.tracker.job_ts.base.constant.HeaderConstant;
 import com.tracker.job_ts.siber.dto.RateLimitClientDto;
 import com.tracker.job_ts.siber.entity.RateLimit;
 import com.tracker.job_ts.siber.repository.RateLimitRepository;
@@ -21,8 +22,8 @@ public class RateLimiterFilter implements WebFilter {
 
     private final RateLimitRepository rateLimitRepository;
 
-    private static final int DEFAULT_MAX_REQUESTS = 5128;
-    private static final int AUTH_MAX_REQUESTS = 5555;
+    private static final int DEFAULT_MAX_REQUESTS = 100;
+    private static final int AUTH_MAX_REQUESTS = 6;
     private static final Duration WINDOW = Duration.ofSeconds(60);
 
     // Hedeflenen path'ler
@@ -74,12 +75,10 @@ public class RateLimiterFilter implements WebFilter {
     private RateLimitClientDto getClientId(ServerWebExchange exchange) {
         // JWT varsa kullanıcının ID'si, yoksa IP adresi
         RateLimitClientDto dto = new RateLimitClientDto();
-        String ip = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
-        if (ip == null) {
-            ip = exchange.getRequest().getRemoteAddress() != null ?
-                    exchange.getRequest().getRemoteAddress().getAddress().getHostAddress() : "unknown";
-        }
-        dto.setCliendId(ip);
+        //String ip = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+        String clientIp = exchange.getRequest().getHeaders().getFirst(HeaderConstant.X_CLIENT_IP);
+
+        dto.setCliendId(clientIp != null || !"".equals(clientIp) ? clientIp : "unknown");
         dto.setToken(exchange.getRequest().getHeaders().getFirst("Authorization"));
         return dto;
     }
