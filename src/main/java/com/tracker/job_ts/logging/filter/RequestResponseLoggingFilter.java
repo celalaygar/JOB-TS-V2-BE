@@ -46,14 +46,16 @@ public class RequestResponseLoggingFilter implements WebFilter {
 
         // Yanıt header'ına Trace ID ekle
         response.getHeaders().add(TRACE_ID_HEADER, traceId);
+        String clientIp = request.getHeaders().getFirst("X-Client-IP");
 
         ApiLog apiLog = new ApiLog();
+        apiLog.setClientIp(clientIp!= null ? clientIp : "unknown");
         apiLog.setRequestId(requestId);
         apiLog.setTraceId(traceId); // ApiLog'a Trace ID'yi set et
         apiLog.setRequestTime(LocalDateTime.now()); // İstek zamanını set et
         apiLog.setMethod(request.getMethod().name());
         apiLog.setPath(request.getPath().value());
-        apiLog.setClientIp(request.getRemoteAddress() != null ? request.getRemoteAddress().getHostString() : "unknown");
+        //apiLog.setClientIp(request.getRemoteAddress() != null ? request.getRemoteAddress().getHostString() : "unknown");
         apiLog.setRequestHeaders(request.getHeaders().toSingleValueMap());
 
         // Token ve Email bilgilerini al (eğer varsa)
