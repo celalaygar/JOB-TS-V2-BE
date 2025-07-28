@@ -1,4 +1,4 @@
-package com.tracker.job_ts.project.service;
+package com.tracker.job_ts.project.service.imp;
 
 import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.auth.service.AuthHelperService;
@@ -12,6 +12,8 @@ import com.tracker.job_ts.project.model.ProjectSystemStatus;
 import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
+import com.tracker.job_ts.project.service.ProjectService;
+import com.tracker.job_ts.project.service.ProjectValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;

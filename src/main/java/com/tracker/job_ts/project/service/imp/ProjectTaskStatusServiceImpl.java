@@ -1,15 +1,16 @@
-package com.tracker.job_ts.project.service;
+package com.tracker.job_ts.project.service.imp;
 
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.project.dto.taskStatus.ProjectTaskStatusDTO;
 import com.tracker.job_ts.project.dto.taskStatus.ProjectTaskStatusResponseDTO;
 import com.tracker.job_ts.project.entity.ProjectTaskStatus;
 import com.tracker.job_ts.project.exception.ProjectNotFoundException;
-import com.tracker.job_ts.project.exception.ProjectTaskStatusNotFoundException;
-import com.tracker.job_ts.project.exception.ProjectTaskStatusValidationException;
+import com.tracker.job_ts.project.exception.projectTaskStatus.ProjectTaskStatusNotFoundException;
+import com.tracker.job_ts.project.exception.projectTaskStatus.ProjectTaskStatusValidationException;
 import com.tracker.job_ts.project.mapper.ProjectTaskStatusMapper;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
+import com.tracker.job_ts.project.service.ProjectTaskStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;

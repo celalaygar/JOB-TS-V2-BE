@@ -1,5 +1,6 @@
 package com.tracker.job_ts.project.exception;
 
+import com.tracker.job_ts.project.exception.projectTaskStatus.ProjectTaskStatusNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

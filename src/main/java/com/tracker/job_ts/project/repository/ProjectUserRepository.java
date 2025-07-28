@@ -12,4 +12,6 @@ public interface ProjectUserRepository extends ReactiveMongoRepository<ProjectUs
     Mono<ProjectUser> findByProjectIdAndUserId(String projectId, String userId);
     Flux<ProjectUser> findAllByUserId(String userId);
     Mono<ProjectUser> findByProjectIdAndEmail(String projectId, String email);
+    // Yeni eklenen metot
+    Flux<ProjectUser> findByProjectIdAndProjectTeamIdsContaining(String projectId, String teamId);
 }

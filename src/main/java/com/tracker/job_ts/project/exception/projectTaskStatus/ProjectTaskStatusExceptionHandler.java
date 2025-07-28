@@ -1,8 +1,6 @@
 package com.tracker.job_ts.project.exception.projectTaskStatus;
 
 import com.tracker.job_ts.project.exception.ProjectNotFoundException;
-import com.tracker.job_ts.project.exception.ProjectTaskStatusNotFoundException;
-import com.tracker.job_ts.project.exception.ProjectTaskStatusValidationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import reactor.core.publisher.Mono;

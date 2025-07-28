@@ -22,7 +22,7 @@ public class ProjectUser {
     @Id
     private String id;
     private String projectId;
-    private String projectTeamId;
+    private List<String> projectTeamIds; // Bu satırı ekleyin
     private String userId;
     private String email;
     private String firstname;

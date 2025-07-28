@@ -1,4 +1,4 @@
-package com.tracker.job_ts.project.service;
+package com.tracker.job_ts.project.service.imp;
 
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.project.dto.ProjectUserRole.ProjectUserRoleDto;
@@ -8,6 +8,7 @@ import com.tracker.job_ts.project.mapper.PermissionMapperService;
 import com.tracker.job_ts.project.mapper.ProjectUserRoleMapper;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectRoleRepository;
+import com.tracker.job_ts.project.service.ProjectUserRoleService;
 import com.tracker.job_ts.project.validator.ProjectRoleValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

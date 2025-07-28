@@ -1,7 +1,7 @@
 package com.tracker.job_ts.project.service;
 
 import com.tracker.job_ts.project.dto.taskStatus.ProjectTaskStatusDTO;
-import com.tracker.job_ts.project.exception.ProjectTaskStatusValidationException;
+import com.tracker.job_ts.project.exception.projectTaskStatus.ProjectTaskStatusValidationException;
 import reactor.core.publisher.Mono;
 
 public class ProjectTaskStatusValidationService {

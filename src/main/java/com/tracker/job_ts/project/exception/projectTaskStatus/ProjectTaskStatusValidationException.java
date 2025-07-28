@@ -1,4 +1,4 @@
-package com.tracker.job_ts.project.exception;
+package com.tracker.job_ts.project.exception.projectTaskStatus;
 
 public class ProjectTaskStatusValidationException extends RuntimeException {
     public ProjectTaskStatusValidationException(String message) {
