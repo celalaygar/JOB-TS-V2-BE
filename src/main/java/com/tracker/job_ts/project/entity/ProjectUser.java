@@ -28,8 +28,9 @@ public class ProjectUser {
     private String firstname;
     private String lastname;
     private String username;
-    private boolean isCreator;
-    private boolean isTeamMember;
+    private Boolean isCreator;
+    private Boolean isProjectMember;
+    private Boolean isTeamMember;
     private ProjectSystemRole projectSystemRole;
     private String assignedBy;
     private LocalDateTime assignedAt;

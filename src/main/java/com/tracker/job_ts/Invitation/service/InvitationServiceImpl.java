@@ -133,7 +133,7 @@ public class InvitationServiceImpl implements InvitationService {
                                                             .firstname(user.getFirstname())
                                                             .lastname(user.getLastname())
                                                             .isCreator(false)
-                                                            .isTeamMember(true)
+                                                            .isProjectMember(true)
                                                             .projectSystemRole(ProjectSystemRole.PROJECT_USER) // veya başka bir default rol
                                                             .assignedBy(invitation.getInvitedBy().getId())
                                                             .assignedAt(LocalDateTime.now())

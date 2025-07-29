@@ -56,7 +56,7 @@ public class ProjectServiceImpl implements ProjectService {
                                         .firstname(currentUser.getFirstname())
                                         .lastname(currentUser.getLastname())
                                         .isCreator(true)
-                                        .isTeamMember(true)
+                                        .isProjectMember(true)
                                         .projectSystemRole(ProjectSystemRole.PROJECT_ADMIN)
                                         .assignedBy(currentUser.getId())
                                         .assignedAt(LocalDateTime.now())

@@ -6,13 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import jakarta.validation.constraints.NotEmpty; // For validation
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserIdsRequest {
-    @NotEmpty(message = "User IDs cannot be empty")
-    private List<String> userIds;
+public class ProjectTeamUserRequest {
+
+    private String projectId;
+    private String teamId;
+    private String userId;
+    private List<String> projectUserIds;
 }

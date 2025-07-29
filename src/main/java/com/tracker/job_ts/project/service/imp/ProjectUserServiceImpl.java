@@ -43,7 +43,7 @@ public class ProjectUserServiceImpl implements ProjectUserService {
                         userRepository.findById(projectUser.getUserId())
                                 .map(user -> {
                                     user.setProjectSystemRole(projectUser.getProjectSystemRole());
-                                    return ProjectUserMapper.toDto(user);
+                                    return ProjectUserMapper.toDto(projectUser);
                                 })
                 );
     }

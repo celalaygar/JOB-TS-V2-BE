@@ -28,7 +28,17 @@ spring:
 
 logging:
   level:
-    org.springframework.security: DEBUG
+    org:
+      springframework:
+        data:
+          mongodb:
+            core:
+              ReactiveMongoTemplate: DEBUG
+              MongoTemplate: DEBUG
+      mongodb:
+        driver:
+          protocol:
+            command: DEBUG
 
 springdoc:
   api-docs:

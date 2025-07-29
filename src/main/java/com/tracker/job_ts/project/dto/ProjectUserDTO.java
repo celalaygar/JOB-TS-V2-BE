@@ -25,8 +25,8 @@ public class ProjectUserDTO {
 
     private String id;
     private String username;
-    private boolean isCreator;
-    private boolean isTeamMember;
+    private Boolean isCreator;
+    private Boolean isProjectMember;
     private ProjectSystemRole projectSystemRole;
     private List<ProjectUserRoleInfo> projectRoles;
     private LocalDateTime createdAt;
@@ -46,8 +46,8 @@ public class ProjectUserDTO {
         this.firstname = currentUser.getFirstname();
         this.lastname = currentUser.getLastname();
         this.email = currentUser.getEmail();
-        this.isCreator = currentUser.isCreator();
-        this.isTeamMember = currentUser.isTeamMember();
+        this.isCreator = currentUser.getIsCreator();
+        this.isProjectMember = currentUser.getIsProjectMember();
         this.projectSystemRole = currentUser.getProjectSystemRole();
         this.projectRoles = currentUser.getProjectRoles();
         this.updatedAt = currentUser.getUpdatedAt();
