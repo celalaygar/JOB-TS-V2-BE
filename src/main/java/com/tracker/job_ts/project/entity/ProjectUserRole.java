@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Document(collection = "project_roles")
+@Document(collection = "project_user_roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -108,6 +108,7 @@ public class AuthService {
                                                         .projectSystemRole(ProjectSystemRole.PROJECT_USER)
                                                         .assignedBy(invitation.getInvitedBy().getId())
                                                         .assignedAt(LocalDateTime.now())
+                                                        .createdAt(LocalDateTime.now())
                                                         .isCreator(false)
                                                         .build();
 

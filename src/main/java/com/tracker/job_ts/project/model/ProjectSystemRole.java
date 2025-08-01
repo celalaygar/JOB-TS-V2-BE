@@ -7,7 +7,8 @@ public enum ProjectSystemRole {
     PROJECT_USER("Project User"),
     PROJECT_OWNER("Project Owner"),
     PROJECT_PASSIVE_USER("Passive User"),
-    PROJECT_DELETED_USER("Deleted User");
+    PROJECT_DELETED_USER("Deleted User"),
+    PROJECT_REMOVED_USER("Removed User");
 
     private final String displayName;
 

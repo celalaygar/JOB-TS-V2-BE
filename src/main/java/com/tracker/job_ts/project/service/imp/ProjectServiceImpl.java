@@ -61,6 +61,7 @@ public class ProjectServiceImpl implements ProjectService {
                                         .projectSystemRole(ProjectSystemRole.PROJECT_ADMIN)
                                         .assignedBy(currentUser.getId())
                                         .assignedAt(LocalDateTime.now())
+                                        .createdAt(LocalDateTime.now())
                                         .build();
 
                                 projectUser.setCreatedAt(LocalDateTime.now());

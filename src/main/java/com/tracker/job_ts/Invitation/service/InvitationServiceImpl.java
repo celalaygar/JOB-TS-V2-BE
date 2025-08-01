@@ -13,8 +13,10 @@ import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.email.service.EmailService;
 import com.tracker.job_ts.project.entity.ProjectUser;
+import com.tracker.job_ts.project.model.ProjectRoleModel;
 import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectRepository;
+import com.tracker.job_ts.project.repository.ProjectRoleRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +37,7 @@ public class InvitationServiceImpl implements InvitationService {
     private final EmailService emailService;
     private final ProjectUserRepository projectUserRepository;
     private final JWTProvider jwtService;
+    private final ProjectRoleRepository projectRoleRepository;
 
 
     @Value("${frontend.url}")
@@ -73,34 +76,37 @@ public class InvitationServiceImpl implements InvitationService {
                                                     // 2. Daha önce davet edilmiş mi?
                                                     invitationRepository.findByProjectIdAndInvitedUserEmailAndStatusIsNot(dto.getProjectId(), dto.getEmail(), InvitationStatus.DECLINED)
                                                             .hasElements()
-                                                            .flatMap(alreadyInvited -> {
-                                                                if (alreadyInvited) {
-                                                                    return Mono.error(new RuntimeException("Bu kullanıcı zaten davet edilmiş."));
-                                                                }
+                                                            .flatMap(alreadyInvited -> projectRoleRepository.findByIdAndCreatedProjectId(dto.getUserProjectRoleId(), dto.getProjectId())
+                                                                    .switchIfEmpty(Mono.error(new RuntimeException("Project User Role not found")))
+                                                                    .flatMap(existingRole ->{
+                                                                        if (alreadyInvited) {
+                                                                            return Mono.error(new RuntimeException("Bu kullanıcı zaten davet edilmiş."));
+                                                                        }
 
-                                                                // Davet işlemi başlatılabilir
-                                                                String token = jwtService.generateInvitationToken(dto.getEmail(), dto.getProjectId());
-                                                                Invitation invitation = Invitation.builder()
-                                                                        .status(InvitationStatus.PENDING)
-                                                                        .invitedBy(UserSummaryMapper.mapUser(authUser))
-                                                                        .invitedUser(UserSummaryMapper.mapUser(invitedUser))
-                                                                        .project(ProjectSummary.builder()
-                                                                                .id(project.getId())
-                                                                                .name(project.getName())
-                                                                                .build())
-                                                                        .tokenExpiry(LocalDateTime.now().plusHours(1))
-                                                                        .createdAt(LocalDateTime.now())
-                                                                        .build();
+                                                                        // Davet işlemi başlatılabilir
+                                                                        String token = jwtService.generateInvitationToken(dto.getEmail(), dto.getProjectId());
+                                                                        Invitation invitation = Invitation.builder()
+                                                                                .status(InvitationStatus.PENDING)
+                                                                                .invitedBy(UserSummaryMapper.mapUser(authUser))
+                                                                                .invitedUser(UserSummaryMapper.mapUser(invitedUser))
+                                                                                .project(ProjectSummary.builder()
+                                                                                        .id(project.getId())
+                                                                                        .name(project.getName())
+                                                                                        .build())
+                                                                                .tokenExpiry(LocalDateTime.now().plusHours(1))
+                                                                                .projectRole(new ProjectRoleModel(existingRole))
+                                                                                .createdAt(LocalDateTime.now())
+                                                                                .build();
 
-                                                                if (invitedUser.getId() == null) {
-                                                                    invitation.setToken(token);
-                                                                    String registrationLink = frontendUrl + "register/invite/" + token;
-                                                                    return emailService.sendCustomInvitationEmail(dto.getEmail(), project.getName(), registrationLink)
-                                                                            .then(invitationRepository.save(invitation));
-                                                                }
+                                                                        if (invitedUser.getId() == null) {
+                                                                            invitation.setToken(token);
+                                                                            String registrationLink = frontendUrl + "register/invite/" + token;
+                                                                            return emailService.sendCustomInvitationEmail(dto.getEmail(), project.getName(), registrationLink)
+                                                                                    .then(invitationRepository.save(invitation));
+                                                                        }
 
-                                                                return invitationRepository.save(invitation);
-                                                            })
+                                                                        return invitationRepository.save(invitation);
+                                                                    }))
                                             );
                                 })
                         )
@@ -118,30 +124,34 @@ public class InvitationServiceImpl implements InvitationService {
 
                             return projectRepository.findById(invitation.getProject().getId())
                                     .switchIfEmpty(Mono.error(new RuntimeException("Project not found")))
-                                    .flatMap(project -> {
-                                        String projectId = project.getId();
-                                        String userId = user.getId();
+                                    .flatMap(project -> projectRoleRepository.findByIdAndCreatedProjectId(invitation.getProjectRole().getId(), project.getId())
+                                            .switchIfEmpty(Mono.error(new RuntimeException("Project User Role not found")))
+                                            .flatMap(existingRole->{
+                                                String projectId = project.getId();
+                                                String userId = user.getId();
 
-                                        // ProjectUser daha önce eklenmiş mi kontrolü
-                                        return projectUserRepository.findByProjectIdAndUserId(projectId, userId)
-                                                .flatMap(existing -> Mono.empty()) // zaten varsa hiçbir şey yapma
-                                                .switchIfEmpty(Mono.defer(() -> {
-                                                    ProjectUser projectUser = ProjectUser.builder()
-                                                            .projectId(projectId)
-                                                            .userId(userId)
-                                                            .email(user.getEmail())
-                                                            .firstname(user.getFirstname())
-                                                            .lastname(user.getLastname())
-                                                            .isCreator(false)
-                                                            .isProjectMember(true)
-                                                            .projectSystemRole(ProjectSystemRole.PROJECT_USER) // veya başka bir default rol
-                                                            .assignedBy(invitation.getInvitedBy().getId())
-                                                            .assignedAt(LocalDateTime.now())
-                                                            .build();
-                                                    return projectUserRepository.save(projectUser);
-                                                }))
-                                                .then(invitationRepository.save(invitation));
-                                    });
+                                                // ProjectUser daha önce eklenmiş mi kontrolü
+                                                return projectUserRepository.findByProjectIdAndUserId(projectId, userId)
+                                                        .flatMap(existing -> Mono.empty()) // zaten varsa hiçbir şey yapma
+                                                        .switchIfEmpty(Mono.defer(() -> {
+                                                            ProjectUser projectUser = ProjectUser.builder()
+                                                                    .projectId(projectId)
+                                                                    .userId(userId)
+                                                                    .email(user.getEmail())
+                                                                    .firstname(user.getFirstname())
+                                                                    .lastname(user.getLastname())
+                                                                    .isCreator(false)
+                                                                    .isProjectMember(true)
+                                                                    .projectRole(new ProjectRoleModel(existingRole))
+                                                                    .projectSystemRole(ProjectSystemRole.PROJECT_USER) // veya başka bir default rol
+                                                                    .assignedBy(invitation.getInvitedBy().getId())
+                                                                    .assignedAt(LocalDateTime.now())
+                                                                    .createdAt(LocalDateTime.now())
+                                                                    .build();
+                                                            return projectUserRepository.save(projectUser);
+                                                        }))
+                                                        .then(invitationRepository.save(invitation));
+                                            }));
                         }));
     }
 

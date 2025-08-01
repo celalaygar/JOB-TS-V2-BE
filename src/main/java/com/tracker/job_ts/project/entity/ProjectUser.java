@@ -1,6 +1,7 @@
 package com.tracker.job_ts.project.entity;
 
 
+import com.tracker.job_ts.project.model.ProjectRoleModel;
 import com.tracker.job_ts.project.model.ProjectUserRoleInfo;
 import com.tracker.job_ts.project.model.ProjectSystemRole;
 import lombok.AllArgsConstructor;
@@ -32,6 +33,7 @@ public class ProjectUser {
     private Boolean isProjectMember;
     private Boolean isTeamMember;
     private ProjectSystemRole projectSystemRole;
+    private ProjectRoleModel projectRole;
     private String assignedBy;
     private LocalDateTime assignedAt;
     private List<ProjectUserRoleInfo> projectRoles;

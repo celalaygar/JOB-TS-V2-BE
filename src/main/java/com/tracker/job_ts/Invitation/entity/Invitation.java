@@ -1,5 +1,6 @@
 package com.tracker.job_ts.Invitation.entity;
 
+import com.tracker.job_ts.project.model.ProjectRoleModel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,4 +26,5 @@ public class Invitation {
     private LocalDateTime createdAt;
     private String token; // JWT token
     private LocalDateTime tokenExpiry;
+    private ProjectRoleModel projectRole;
 }

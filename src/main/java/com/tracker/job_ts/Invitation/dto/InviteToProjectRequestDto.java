@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 public class InviteToProjectRequestDto {
     private String email;
     private String projectId;
+    private String userProjectRoleId;
 
 }
