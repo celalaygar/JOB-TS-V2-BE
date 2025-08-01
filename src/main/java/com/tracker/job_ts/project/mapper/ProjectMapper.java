@@ -26,6 +26,7 @@ public class ProjectMapper {
                 .priority(project.getPriority())
                 .tags(project.getTags())
                 .repository(project.getRepository())
+                .createdBy(project.getCreatedBy())
                 .build();
     }
 

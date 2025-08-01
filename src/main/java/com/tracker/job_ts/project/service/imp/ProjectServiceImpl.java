@@ -8,6 +8,7 @@ import com.tracker.job_ts.project.dto.ProjectUserDTO;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.mapper.ProjectMapper;
+import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.ProjectSystemStatus;
 import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectRepository;
@@ -40,9 +41,9 @@ public class ProjectServiceImpl implements ProjectService {
 
         return authHelperService.getAuthUser() // Login olan kullanıcıyı al
                 .flatMap(currentUser -> {
-                    ProjectUserDTO projectUserDTO = new ProjectUserDTO(currentUser);
+                    CreatedBy createdBy = new CreatedBy(currentUser);
                     Project entity = mapper.projectRequestToEntity(dto);
-                    entity.setCreatedBy(projectUserDTO);
+                    entity.setCreatedBy(createdBy);
                     entity.setProjectCode(generateProjectCode(entity.getName())); // <-- Burada kod set ediliyor
                     entity.setCreatedAt(LocalDateTime.now());
                     entity.setUpdatedAt(LocalDateTime.now());

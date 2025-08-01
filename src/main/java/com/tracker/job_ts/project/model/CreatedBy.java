@@ -20,6 +20,7 @@ import java.util.Set;
 public class CreatedBy {
     @Id
     private String id;
+    private String userId;
     private String email;
     private String firstname;
     private String lastname;
@@ -27,6 +28,7 @@ public class CreatedBy {
 
     public CreatedBy(User user) {
         this.id = user.getId();
+        this.userId = user.getId();
         this.email = user.getEmail();
         this.firstname = user.getFirstname();
         this.lastname = user.getLastname();
@@ -34,6 +36,7 @@ public class CreatedBy {
     }
     public CreatedBy(ProjectUser user) {
         this.id = user.getUserId();
+        this.userId = user.getUserId();
         this.email = user.getEmail();
         this.firstname = user.getFirstname();
         this.lastname = user.getLastname();

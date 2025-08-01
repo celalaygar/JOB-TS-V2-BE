@@ -2,6 +2,7 @@ package com.tracker.job_ts.project.dto;
 
 import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.project.entity.ProjectTeam;
+import com.tracker.job_ts.project.model.CreatedBy;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,7 @@ public class ProjectDto {
     private Integer openIssues;
     private List<User> users;
     private List<User> team;
-    private User createdBy;
+    private CreatedBy createdBy;
     private String projectCode;
     private String leadId;
     private String startDate;
