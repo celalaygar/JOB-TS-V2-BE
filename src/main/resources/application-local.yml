@@ -18,13 +18,15 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: aygarcelalx@gmail.com
-    password: jwsm plyb iwgg jiym
+    password: ilqe jrls dacm myjd
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+          ssl:
+            trust: "*" # Tüm sertifikalara güvenmek için (Sadece geliştirme ortamı için önerilir)
 
 logging:
   level:

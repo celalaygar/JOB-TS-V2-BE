@@ -13,6 +13,8 @@ public class ProjectUserMapper {
 
         return ProjectUserResponseDto.builder()
                 .id(user.getId())
+                .userId(user.getUserId())
+                .projectId(user.getProjectId())
                 .email(user.getEmail())
                 .firstname(user.getFirstname())
                 .lastname(user.getLastname())
