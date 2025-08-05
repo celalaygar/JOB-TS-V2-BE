@@ -105,6 +105,7 @@ public class AuthService {
                                                         .lastname(savedUser.getLastname())
                                                         .projectId(projectId)
                                                         .isProjectMember(true)
+                                                        .projectRole(invitation.getProjectRole())
                                                         .projectSystemRole(ProjectSystemRole.PROJECT_USER)
                                                         .assignedBy(invitation.getInvitedBy().getId())
                                                         .assignedAt(LocalDateTime.now())

@@ -23,6 +23,8 @@ spring:
           auth: true
           starttls:
             enable: true
+          ssl:
+            trust: "*" # Tüm sertifikalara güvenmek için (Sadece geliştirme ortamı için önerilir)
 
 logging:
   level:

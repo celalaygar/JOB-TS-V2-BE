@@ -2,9 +2,9 @@ package com.tracker.job_ts.projectTask.model;
 
 public enum ProjectTaskPriority {
     CRITICAL(1, "CRITICAL", "KIRİTİK"),
-    HIGH(1, "PLANNED", "YÜKSEK"),
-    MEDIUM(2, "MEDIUM", "ORTA"),
-    LOW(3, "LOW", "DÜŞÜK") ;
+    HIGH(2, "PLANNED", "YÜKSEK"),
+    MEDIUM(3, "MEDIUM", "ORTA"),
+    LOW(4, "LOW", "DÜŞÜK") ;
 
     private final int id;
     private final String en;

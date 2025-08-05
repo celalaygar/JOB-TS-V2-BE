@@ -3,8 +3,8 @@ package com.tracker.job_ts.projectTask.model;
 public enum ProjectTaskType {
     BUG(1, "BUG", "BUG"),
     FEATURE(2, "FEATURE", "ÖZELLİK"),
-    SUBTASK(2, "SUBTASK", "ALT TASK"),
-    STORY(3, "STORY", "HİKAYE") ;
+    SUBTASK(3, "SUBTASK", "ALT TASK"),
+    STORY(4, "STORY", "HİKAYE") ;
 
     private final int id;
     private final String en;
