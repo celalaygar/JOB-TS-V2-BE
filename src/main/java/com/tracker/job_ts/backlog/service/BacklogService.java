@@ -8,6 +8,7 @@ import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -48,7 +49,6 @@ public class BacklogService {
 
         Query query = new Query();
 
-        query.addCriteria(Criteria.where("createdProject.id").in(userProjectIds));
         query.addCriteria(Criteria.where("sprint").exists(false));
 
         filterDto.getProjectId().ifPresent(projectId -> {
@@ -66,16 +66,21 @@ public class BacklogService {
                 query.addCriteria(Criteria.where("assignee.id").is(assigneeId))
         );
 
-        // Yeni searchText filtresi
-        filterDto.getSearchText().ifPresent(text -> {
-            if (StringUtils.hasText(text)) {
-                // $or operatörü ile title veya taskNumber alanında arama yap
-                query.addCriteria(new Criteria().orOperator(
-                        Criteria.where("title").regex(text, "i"), // case-insensitive arama
-                        Criteria.where("taskNumber").regex(text, "i") // case-insensitive arama
-                ));
-            }
-        });
+// Yeni searchText filtresi
+        String searchText = filterDto.getSearchText();
+        if (StringUtils.hasText(searchText)) {
+            // $or operatörü ile iki farklı regex koşulunu birleştir
+            query.addCriteria(new Criteria().orOperator(
+                    // 1. Koşul: Title sadece "elma" metnine eşitse
+                    Criteria.where("title").regex("^" + searchText + "$", "i"),
+                    // 2. Koşul: Title içinde "elma" metni herhangi bir yerde geçiyorsa
+                    Criteria.where("title").regex(searchText, "i"),
+                    // 3. Koşul: TaskNumber içinde "elma" metni herhangi bir yerde geçiyorsa
+                    Criteria.where("taskNumber").regex("^" + searchText + "$", "i"),
+                    // 2. Koşul: Title içinde "elma" metni herhangi bir yerde geçiyorsa
+                    Criteria.where("taskNumber").regex(searchText, "i")
+            ));
+        }
 
         PageRequest pageRequest = PageRequest.of(page, size);
         query.with(pageRequest);

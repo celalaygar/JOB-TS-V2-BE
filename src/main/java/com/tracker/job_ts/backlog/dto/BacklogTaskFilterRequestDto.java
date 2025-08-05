@@ -15,6 +15,6 @@ public class BacklogTaskFilterRequestDto {
     private Optional<String> projectId;
     private Optional<ProjectTaskType> taskType;
     private Optional<String> assigneeId;
-    private Optional<String> searchText; // Yeni alan
+    private String searchText; // Yeni alan
 
 }
