@@ -14,8 +14,10 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -51,12 +53,15 @@ public class BacklogService {
 
         query.addCriteria(Criteria.where("sprint").exists(false));
 
-        filterDto.getProjectId().ifPresent(projectId -> {
-            if (!userProjectIds.contains(projectId)) {
-                throw new ProjectNotFoundException("You are not authorized to view tasks for this project.");
-            }
-            query.addCriteria(Criteria.where("createdProject.id").is(projectId));
-        });
+
+        if (filterDto.getProjectId().isPresent() &&
+                !CollectionUtils.isEmpty(userProjectIds) &&
+                userProjectIds.contains(filterDto.getProjectId().get()) ) {
+            query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId().get()));
+        } else if (!CollectionUtils.isEmpty(userProjectIds)) {
+            query.addCriteria(Criteria.where("createdProject.id").in(userProjectIds));
+        }
+
 
         filterDto.getTaskType().ifPresent(taskType ->
                 query.addCriteria(Criteria.where("taskType").is(taskType))
