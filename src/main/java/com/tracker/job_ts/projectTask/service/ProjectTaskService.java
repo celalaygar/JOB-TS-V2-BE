@@ -16,6 +16,7 @@ import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
+import com.tracker.job_ts.projectTask.dto.UpdateProjectTaskStatusRequestDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.model.ParentTask;
 import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
@@ -353,39 +354,6 @@ public class ProjectTaskService {
                         )
                 );
     }
-/*
-    public Mono<PagedResult<ProjectTaskDto>> filterTasks(ProjectTaskFltreRequestDto filterDto, int page, int size) {
-        Query query = new Query();
-        if (!StringUtils.isEmpty(filterDto.getTitle())) {
-            query.addCriteria(Criteria.where("title").regex(filterDto.getTitle(), "i"));
-        }
-        if (!StringUtils.isEmpty(filterDto.getDescription())) {
-            query.addCriteria(Criteria.where("description").regex(filterDto.getDescription(), "i"));
-        }
-        if (filterDto.getPriority() != null) {
-            query.addCriteria(Criteria.where("priority").is(filterDto.getPriority()));
-        }
-        if (filterDto.getTaskType() != null) {
-            query.addCriteria(Criteria.where("taskType").is(filterDto.getTaskType()));
-        }
-        if (!StringUtils.isEmpty(filterDto.getProjectId())) {
-            query.addCriteria(Criteria.where("createdProject.id").is(filterDto.getProjectId()));
-        }
-        if (!StringUtils.isEmpty(filterDto.getProjectId()) && !StringUtils.isEmpty(filterDto.getProjectTaskStatusId())) {
-            query.addCriteria(Criteria.where("projectTaskStatus.id").is(filterDto.getProjectTaskStatusId()).and("createdProject.id").is(filterDto.getProjectId()));
-        }
-        if (!StringUtils.isEmpty(filterDto.getAssigneeId())) {
-            query.addCriteria(Criteria.where("assignee.id").is(filterDto.getAssigneeId()));
-        }
-        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        query.with(pageRequest);
-        Mono<List<ProjectTaskDto>> tasks = mongoTemplate.find(query, ProjectTask.class).map(ProjectTaskDto::new).collectList();
-        Mono<Long> count = mongoTemplate.count(Query.of(query).limit(-1).skip(-1), ProjectTask.class);
-        return Mono.zip(tasks, count)
-                .map(tuple -> new PagedResult<ProjectTaskDto>(tuple.getT1(), tuple.getT2(), page, size));
-    }
-*/
-
     private Mono<Backlog> ensureBacklog(String projectId, CreatedBy user, CreatedProject project) {
         return backlogRepository.findByCreatedProjectId(projectId)
                 .switchIfEmpty(
@@ -401,4 +369,32 @@ public class ProjectTaskService {
                         )
                 );
     }
+
+    /**
+     * Bir proje görevinin durumunu günceller.
+     *
+     * @param dto Durumu güncellenecek görevin bilgileri
+     * @return Güncellenmiş görevin DTO'su
+     */
+    public Mono<ProjectTaskDto> updateTaskStatus(UpdateProjectTaskStatusRequestDto dto) {
+        return authHelperService.getAuthUser()
+                .flatMap(user -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
+                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                        .flatMap(projectUser -> taskRepository.findById(dto.getProjectTaskId())
+                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project task not found.")))
+                                .flatMap(task -> {
+                                    if (!task.getCreatedProject().getId().equals(dto.getProjectId())) {
+                                        return Mono.error(new IllegalArgumentException("Project task does not belong to the specified project."));
+                                    }
+                                    return projectTaskStatusRepository.findByIdAndCreatedProjectId(dto.getProjectTaskStatusId(), dto.getProjectId())
+                                            .switchIfEmpty(Mono.error(new NoSuchElementException("Project task status not found.")))
+                                            .flatMap(newStatus -> {
+                                                task.setProjectTaskStatus(new ProjectTaskStatusModel(newStatus));
+                                                return taskRepository.save(task).map(ProjectTaskDto::new);
+                                            });
+                                })
+                        )
+                );
+    }
+
 }

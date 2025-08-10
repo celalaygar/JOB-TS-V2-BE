@@ -5,6 +5,7 @@ import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
+import com.tracker.job_ts.projectTask.dto.UpdateProjectTaskStatusRequestDto;
 import com.tracker.job_ts.projectTask.service.ProjectTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -86,5 +87,15 @@ public class ProjectTaskController {
     @GetMapping("/subtasks/{taskId}")
     public Flux<ProjectTaskDto> getSubtasks(@PathVariable String taskId) {
         return projectTaskService.getSubtasksByParentTaskId(taskId);
+    }
+
+    /**
+     * Bir proje görevinin durumunu günceller.
+     * @param dto Durumu güncellenecek görevin bilgileri
+     * @return Güncellenmiş görevin DTO'su
+     */
+    @PostMapping("/update-status")
+    public Mono<ProjectTaskDto> updateTaskStatus(@RequestBody UpdateProjectTaskStatusRequestDto dto) {
+        return projectTaskService.updateTaskStatus(dto);
     }
 }
