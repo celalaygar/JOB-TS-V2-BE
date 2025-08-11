@@ -10,11 +10,13 @@ import com.tracker.job_ts.project.dto.projectTeam.ProjectTeamResponseDTO;
 import com.tracker.job_ts.project.dto.projectTeam.ProjectTeamDto;
 import com.tracker.job_ts.project.dto.projectTeam.ProjectTeamInviteUserRequestDto;
 import com.tracker.job_ts.project.entity.ProjectTeam;
+import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.exception.ProjectNotFoundException;
 import com.tracker.job_ts.project.exception.projectTeam.ProjectTeamValidationException;
 import com.tracker.job_ts.project.mapper.ProjectTeamMapper;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTeamRepository;
+import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -34,48 +36,62 @@ public class ProjectTeamService {
     private final InvitationRepository invitationRepository;
     private final EmailService emailService;
     private final UserRepository userRepository;
+    private final ProjectUserRepository projectUserRepository;
 
     public Mono<ProjectTeamResponseDTO> create(ProjectTeamDto dto) {
         return validationService.validate(dto)
                 .then(authHelperService.getAuthUser())
-                .flatMap(user -> projectRepository.findByIdAndCreatedByUserId(dto.getProjectId(), user.getId())
-                        .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found: " + dto.getProjectId())))
-                        .flatMap(project -> teamRepository.existsByCreatedProjectIdAndName(dto.getProjectId(), dto.getName())
-                                .flatMap(exists -> {
-                                    if (exists) {
-                                        return Mono.error(new ProjectTeamValidationException("Team name already exists"));
-                                    }
-                                    ProjectTeam entity = mapper.toEntity(dto, project, user);
-                                    entity.setCreatedAt(LocalDateTime.now());
-                                    entity.setUpdatedAt(LocalDateTime.now());
-                                    return teamRepository.save(entity);
-                                })
+                .flatMap(user -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
+                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                        .flatMap(projectUser -> projectRepository.findById(dto.getProjectId())
+                                .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found: " + dto.getProjectId())))
+                                .flatMap(project -> teamRepository.existsByCreatedProjectIdAndName(dto.getProjectId(), dto.getName())
+                                        .flatMap(exists -> {
+                                            if (exists) {
+                                                return Mono.error(new ProjectTeamValidationException("Team name already exists"));
+                                            }
+                                            ProjectTeam entity = mapper.toEntity(dto, project, user);
+                                            entity.setCreatedAt(LocalDateTime.now());
+                                            entity.setUpdatedAt(LocalDateTime.now());
+                                            return teamRepository.save(entity);
+                                        })
+                                )
                         )
                 )
                 .map(mapper::toDto);
     }
 
-    public Mono<ProjectTeamResponseDTO> update( ProjectTeamDto dto) {
+    public Mono<ProjectTeamResponseDTO> update(ProjectTeamDto dto) {
         return validationService.validate(dto)
-                .then(teamRepository.findById(dto.getId())
+                .then(authHelperService.getAuthUser())
+                .flatMap(user -> teamRepository.findById(dto.getId())
                         .switchIfEmpty(Mono.error(new ProjectTeamValidationException("Team not found")))
-                        .flatMap(existing -> projectRepository.findById(dto.getProjectId())
-                                .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found")))
-                                .flatMap(project -> {
-                                    ProjectTeam updated = mapper.toUpdatedEntity(existing, dto, project);
-                                    return teamRepository.save(updated);
-                                })
+                        .flatMap(existingTeam -> projectUserRepository.findByProjectIdAndUserId(existingTeam.getCreatedProject().getId(), user.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                                .flatMap(projectUser -> projectRepository.findById(dto.getProjectId())
+                                        .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found")))
+                                        .flatMap(project -> {
+
+                                            if (!project.getId().equals(existingTeam.getCreatedProject().getId())) {
+                                                return Mono.error(new ProjectTeamValidationException("Project Not found for teams"));
+                                            }
+                                            ProjectTeam updated = mapper.toUpdatedEntity(existingTeam, dto, project);
+                                            return teamRepository.save(updated);
+                                        })
+                                )
                         )
-                )
-                .map(mapper::toDto);
+                ).map(mapper::toDto);
     }
 
     public Mono<ProjectTeamResponseDTO> getById(ProjectTeamDto dto) {
-        return  projectRepository.findById(dto.getProjectId())
-                .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found: " + dto.getProjectId())))
-                .flatMap(project ->teamRepository.findByIdAndCreatedProjectId(dto.getId(),dto.getProjectId())
-                        .switchIfEmpty(Mono.error(new ProjectTeamValidationException("Team not found")))
-                        .map(mapper::toDto));
+        return authHelperService.getAuthUser()
+                .flatMap(user -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
+                        .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                        .flatMap(projectUser -> teamRepository.findByIdAndCreatedProjectId(dto.getId(), dto.getProjectId())
+                                .switchIfEmpty(Mono.error(new ProjectTeamValidationException("Team not found")))
+                                .map(mapper::toDto)
+                        )
+                );
     }
 
     public Flux<ProjectTeamResponseDTO> getByProjectId(String projectId) {
@@ -127,6 +143,28 @@ public class ProjectTeamService {
                                             }));
                         }));
     }
+
+
+    /**
+     * Oturum açmış kullanıcının üye olduğu tüm projelerdeki takımları listeler.
+     *
+     * @return Kullanıcının dahil olduğu projelerdeki tüm takımların listesi
+     */
+    public Flux<ProjectTeamResponseDTO> getAll() {
+        return authHelperService.getAuthUser()
+                .flatMapMany(currentUser ->
+                        projectUserRepository.findAllByUserId(currentUser.getId())
+                                .map(ProjectUser::getProjectId)
+                                .distinct()
+                                .collectList()
+                                .flatMapMany(projectIds ->
+                                        // ProjectTeamRepository'de bu metotun olması gerekir: Flux<ProjectTeam> findByCreatedProjectIdIn(List<String> projectIds);
+                                        teamRepository.findByCreatedProjectIdIn(projectIds)
+                                )
+                )
+                .map(mapper::toDto);
+    }
+
 
     private UserSummary mapUser(User user) {
         return UserSummary.builder()

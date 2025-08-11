@@ -6,10 +6,15 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Repository
 public interface ProjectTeamRepository extends ReactiveMongoRepository<ProjectTeam, String> {
 
     Flux<ProjectTeam> findByCreatedProjectId(String projectId);
     Mono<Boolean> existsByCreatedProjectIdAndName(String projectId, String name);
     Mono<ProjectTeam> findByIdAndCreatedProjectId(String id, String projectId);
+
+    // Yeni eklenen metot
+    Flux<ProjectTeam> findByCreatedProjectIdIn(List<String> createdProjectId);
 }

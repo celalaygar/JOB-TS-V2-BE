@@ -47,4 +47,10 @@ public class ProjectTeamController {
     public Mono<Invitation> inviteUserToTeam(@RequestBody ProjectTeamInviteUserRequestDto dto) {
         return service.inviteUserToTeam(dto);
     }
+
+    @GetMapping("/all")
+    public Flux<ProjectTeamResponseDTO> getAll() {
+        return service.getAll();
+    }
+
 }
