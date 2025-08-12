@@ -8,6 +8,7 @@ import com.tracker.job_ts.project.dto.projectTeam.ProjectTeamUserRequest;
 import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.exception.ProjectNotFoundException;
 import com.tracker.job_ts.project.exception.projectTeam.ProjectTeamValidationException;
+import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTeamRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
@@ -50,7 +51,7 @@ public class ProjectTeamUserService {
                         .flatMapMany(projectTeam -> projectRepository.findByIdAndCreatedByUserId(request.getProjectId(), authUser.getId())
                                 .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found or you are not the creator.")))
                                 .flatMapMany(project -> Flux.fromIterable(request.getProjectUserIds())
-                                        .flatMap(projectUserId -> projectUserRepository.findByIdAndProjectId(projectUserId, project.getId())
+                                        .flatMap(projectUserId -> projectUserRepository.findByIdAndProjectIdAndProjectSystemRole(projectUserId, project.getId(), ProjectSystemRole.PROJECT_ADMIN)
                                                 .switchIfEmpty(Mono.error(new UserNotFoundException("Project User not found: " + projectUserId)))
                                                 .flatMap(existingProjectUser -> userRepository.findById(existingProjectUser.getUserId())
                                                         .switchIfEmpty(Mono.error(new UserNotFoundException("User to add not found: " + existingProjectUser.getUserId())))
@@ -102,7 +103,7 @@ public class ProjectTeamUserService {
                         .switchIfEmpty(Mono.error(new ProjectTeamValidationException("Project Team not found: " + request.getTeamId())))
                         .flatMap(projectTeam -> projectRepository.findByIdAndCreatedByUserId(projectTeam.getCreatedProject().getId(), authUser.getId())
                                 .switchIfEmpty(Mono.error(new ProjectNotFoundException("Project not found or you are not the creator.")))
-                                .flatMap(project -> projectUserRepository.findByProjectIdAndUserId(project.getId(), request.getUserId())
+                                .flatMap(project -> projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRole(project.getId(), request.getUserId(),ProjectSystemRole.PROJECT_ADMIN)
                                         .switchIfEmpty(Mono.error(new ProjectTeamValidationException("User is not registered in the project. Cannot remove.")))
                                         .flatMap(existingProjectUser -> {
                                             List<String> currentTeamIds = Optional.ofNullable(existingProjectUser.getProjectTeamIds())

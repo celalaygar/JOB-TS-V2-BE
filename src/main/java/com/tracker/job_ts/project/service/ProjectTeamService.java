@@ -14,6 +14,7 @@ import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.exception.ProjectNotFoundException;
 import com.tracker.job_ts.project.exception.projectTeam.ProjectTeamValidationException;
 import com.tracker.job_ts.project.mapper.ProjectTeamMapper;
+import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTeamRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
@@ -85,7 +86,7 @@ public class ProjectTeamService {
 
     public Mono<ProjectTeamResponseDTO> getById(ProjectTeamDto dto) {
         return authHelperService.getAuthUser()
-                .flatMap(user -> projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), user.getId())
+                .flatMap(user -> projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(dto.getProjectId(), user.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                         .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                         .flatMap(projectUser -> teamRepository.findByIdAndCreatedProjectId(dto.getId(), dto.getProjectId())
                                 .switchIfEmpty(Mono.error(new ProjectTeamValidationException("Team not found")))
