@@ -77,15 +77,29 @@ public class ProjectServiceImpl implements ProjectService {
         validator.validate(dto);
         return authHelperService.getAuthUser()
                 .flatMap(currentUser ->
-                        repository.findByIdAndCreatedByUserIdAndProjectSystemStatus(
-                                        id, currentUser.getId(), ProjectSystemStatus.ACTIVE)
-                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
-                                .flatMap(project -> {
-                                    Project updated = mapper.toEntity(dto);
-                                    updated.setId(id);
-                                    return repository.save(updated);
+                        projectUserRepository.findByProjectIdAndUserId(id, currentUser.getId())
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project or project does not exist.")))
+                                .flatMap(projectUser -> {
+                                    // Projeyi güncelleyebilmek için PROJECT_ADMIN yetkisine sahip olunması gerektiğini varsayıyoruz.
+                                    if (projectUser.getProjectSystemRole() != ProjectSystemRole.PROJECT_ADMIN) {
+                                        return Mono.error(new IllegalAccessException("User does not have permission to update this project."));
+                                    }
+                                    return repository.findById(id)
+                                            .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
+                                            .flatMap(existingProject -> {
+                                                // DTO'dan gelen verilerle mevcut projenin alanlarını güncelliyoruz.
+                                                existingProject.setName(dto.getName());
+                                                existingProject.setDescription(dto.getDescription());
+                                                existingProject.setStatus(dto.getStatus());
+                                                existingProject.setPriority(dto.getPriority());
+                                                // create metodundaki gibi proje kodu yeniden oluşturulmaz, mevcut hali korunur.
+                                                // createdBy alanı da aynı şekilde korunur.
+                                                existingProject.setUpdatedAt(LocalDateTime.now());
+
+                                                return repository.save(existingProject);
+                                            })
+                                            .map(mapper::toDto);
                                 })
-                                .map(mapper::toDto)
                 );
     }
 
