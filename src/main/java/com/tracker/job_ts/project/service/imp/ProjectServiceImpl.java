@@ -92,6 +92,10 @@ public class ProjectServiceImpl implements ProjectService {
                                                 existingProject.setDescription(dto.getDescription());
                                                 existingProject.setStatus(dto.getStatus());
                                                 existingProject.setPriority(dto.getPriority());
+                                                existingProject.setRepository(dto.getRepository());
+                                                existingProject.setStartDate(dto.getStartDate());
+                                                existingProject.setEndDate(dto.getEndDate());
+                                                existingProject.setTags(dto.getTags());
                                                 // create metodundaki gibi proje kodu yeniden oluşturulmaz, mevcut hali korunur.
                                                 // createdBy alanı da aynı şekilde korunur.
                                                 existingProject.setUpdatedAt(LocalDateTime.now());
