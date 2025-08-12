@@ -4,6 +4,7 @@ import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.project.dto.ProjectUserDTO;
 import com.tracker.job_ts.project.dto.projectUser.ProjectUserResponseDto;
+import com.tracker.job_ts.project.dto.projectUser.RemoveProjectUserRequestDto;
 import com.tracker.job_ts.project.service.ProjectService;
 import com.tracker.job_ts.project.service.ProjectUserService;
 import lombok.RequiredArgsConstructor;
@@ -25,14 +26,13 @@ public class ProjectUserController {
     public Flux<ProjectUserResponseDto> getProjectUsers(@PathVariable String projectId) {
         return projectUserService.listProjectUsers(projectId);
     }
-
-    @PostMapping("/add")
-    public Mono<Void> addUser(@RequestBody ProjectUserDTO dto) {
-        return projectUserService.addUserToProject(dto);
-    }
-
-    @PostMapping("/remove")
-    public Mono<Void> removeUser(@RequestBody ProjectUserDTO dto) {
-        return projectUserService.removeUserFromProject(dto);
+    /**
+     * Projeden bir kullanıcıyı çıkarır.
+     * @param dto Çıkarılacak kullanıcının proje ve kullanıcı ID'lerini içeren DTO
+     * @return İşlemin başarılı olup olmadığını belirten bir Mono<Boolean>
+     */
+    @PostMapping("/remove-user")
+    public Mono<Boolean> removeUserFromProject(@RequestBody RemoveProjectUserRequestDto dto) {
+        return projectUserService.removeUserFromProject(dto.getProjectId(), dto.getUserId());
     }
 }

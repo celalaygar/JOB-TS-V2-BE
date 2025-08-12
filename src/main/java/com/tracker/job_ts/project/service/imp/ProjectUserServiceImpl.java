@@ -7,6 +7,7 @@ import com.tracker.job_ts.project.dto.ProjectDto;
 import com.tracker.job_ts.project.dto.ProjectUserDTO;
 import com.tracker.job_ts.project.dto.projectUser.ProjectUserResponseDto;
 import com.tracker.job_ts.project.mapper.ProjectUserMapper;
+import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.model.ProjectSystemStatus;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
@@ -34,8 +36,7 @@ public class ProjectUserServiceImpl implements ProjectUserService {
     @Override
     public Flux<ProjectUserResponseDto> listProjectUsers(String projectId) {
         return authHelperService.getAuthUser()
-                .flatMap(authUser ->
-                        projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
+                .flatMap(authUser -> projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
                                 .switchIfEmpty(Mono.error(new AccessDeniedException("No access to this project.")))
                 )
                 .thenMany(projectUserRepository.findByProjectId(projectId))
@@ -47,39 +48,48 @@ public class ProjectUserServiceImpl implements ProjectUserService {
                                 })
                 );
     }
+    /**
+     * Projeden bir kullanıcıyı çıkarır. Bu işlem, kullanıcının rolünü "PROJECT_REMOVED_USER" olarak günceller.
+     * @param projectId Proje ID'si
+     * @param userId Çıkarılacak kullanıcının ID'si
+     * @return İşlemin başarılı olup olmadığını belirten bir Mono<Boolean>
+     */
+    public Mono<Boolean> removeUserFromProject(String projectId, String userId) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser -> projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
+                        .switchIfEmpty(Mono.error(new AccessDeniedException("You do not have access to this project.")))
+                        .flatMap(requestingProjectUser -> {
+                            // Yetki kontrolü: Sadece PROJECT_ADMIN veya PROJECT_OWNER rolündeki kullanıcılar çıkarabilir.
+                            if (requestingProjectUser.getProjectSystemRole() != ProjectSystemRole.PROJECT_ADMIN ) {
+                                return Mono.error(new AccessDeniedException("You do not have permission to remove users from this project."));
+                            }
 
+                            // Çıkarılmak istenen kullanıcıyı bul
+                            return projectUserRepository.findByProjectIdAndUserId(projectId, userId)
+                                    .switchIfEmpty(Mono.error(new NoSuchElementException("User not found in the project.")))
+                                    .flatMap(userToRemove -> {
+                                        // Proje yöneticisi kendini çıkaramaz.
+                                        if (userToRemove.getUserId().equals(authUser.getId())) {
+                                            return Mono.error(new IllegalArgumentException("You cannot remove yourself."));
+                                        }
 
+                                        // Projenin yaratıcısı çıkarılamaz.
+                                        if (userToRemove.getIsCreator() != null && userToRemove.getIsCreator()) {
+                                            return Mono.error(new IllegalArgumentException("The project creator cannot be removed."));
+                                        }
 
-    @Override
-    public Mono<Void> addUserToProject(ProjectUserDTO dto) {
-        return userRepository.findByEmail(dto.getEmail())
-                .switchIfEmpty(Mono.error(new NoSuchElementException("User not found.")))
-                .flatMap(user ->
-                        projectRepository.findById(dto.getProjectId())
-                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
-                                .flatMap(project -> {
-                                    if (project.getUsers() == null) {
-                                        project.setUsers(new ArrayList<>());
-                                    }
-                                    project.getUsers().add(user);
-                                    return projectRepository.save(project).then();
-                                })
+                                        // Kullanıcının rolünü ve proje üyeliği durumunu güncelle
+                                        userToRemove.setProjectSystemRole(ProjectSystemRole.PROJECT_REMOVED_USER);
+                                        userToRemove.setIsProjectMember(false);
+                                        userToRemove.setUpdatedAt(LocalDateTime.now());
+                                        userToRemove.setAssignedBy(authUser.getId());
+
+                                        // Güncellenmiş nesneyi kaydet
+                                        return projectUserRepository.save(userToRemove)
+                                                .thenReturn(true);
+                                    });
+                        })
                 );
     }
 
-    @Override
-    public Mono<Void> removeUserFromProject(ProjectUserDTO dto) {
-        return userRepository.findByEmail(dto.getEmail())
-                .switchIfEmpty(Mono.error(new NoSuchElementException("User not found.")))
-                .flatMap(user ->
-                        projectRepository.findById(dto.getProjectId())
-                                .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found.")))
-                                .flatMap(project -> {
-                                    if (project.getUsers() != null) {
-                                        project.getUsers().removeIf(u -> u.getEmail().equals(user.getEmail()));
-                                    }
-                                    return projectRepository.save(project).then();
-                                })
-                );
-    }
 }
