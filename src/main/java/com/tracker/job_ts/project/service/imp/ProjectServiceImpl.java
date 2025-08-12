@@ -112,7 +112,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Flux<ProjectDto> getAll() {
         return authHelperService.getAuthUser()
                 .flatMapMany(currentUser ->
-                        projectUserRepository.findAllByUserId(currentUser.getId())
+                        projectUserRepository.findAllByUserIdAndProjectSystemRoleNot(currentUser.getId(),ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .map(ProjectUser::getProjectId)
                                 .distinct()
                                 .collectList()
@@ -127,7 +127,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Mono<ProjectDto> getById(String id) {
         return authHelperService.getAuthUser()
                 .flatMap(currentUser ->
-                        projectUserRepository.findByProjectIdAndUserId(id, currentUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(id, currentUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new AccessDeniedException("No access to this project.")))
                                 .flatMap(projectUser ->
                                         repository.findById(id)
