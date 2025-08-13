@@ -74,7 +74,7 @@ public class SprintController {
      * @return Güncellenmiş Sprint nesnesi
      */
     @PostMapping("/status")
-    public Mono<ResponseEntity<Sprint>> updateSprintStatus(@RequestBody SprintStatusUpdateRequestDto dto) {
+    public Mono<ResponseEntity<SprintDto>> updateSprintStatus(@RequestBody SprintStatusUpdateRequestDto dto) {
         return sprintService.updateSprintStatus(dto)
                 .map(ResponseEntity::ok);
     }

@@ -352,7 +352,7 @@ public class SprintService {
      * @param dto Yeni sprint durumunu ve sprint ID'sini içeren DTO
      * @return Güncellenmiş Sprint nesnesi
      */
-    public Mono<Sprint> updateSprintStatus(SprintStatusUpdateRequestDto dto) {
+    public Mono<SprintDto> updateSprintStatus(SprintStatusUpdateRequestDto dto) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser -> sprintRepository.findById(dto.getSprintId())
                         .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
@@ -379,7 +379,7 @@ public class SprintService {
                                             // Durumu güncelle ve kaydet
                                             sprint.setSprintStatus(newStatus);
                                             sprint.setUpdatedAt(LocalDateTime.now());
-                                            return sprintRepository.save(sprint);
+                                            return sprintRepository.save(sprint).map(SprintDto::new);
                                         })
                         )
                 );
