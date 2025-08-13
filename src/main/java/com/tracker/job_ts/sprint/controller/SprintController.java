@@ -3,6 +3,7 @@ package com.tracker.job_ts.sprint.controller;
 import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
+import com.tracker.job_ts.sprint.dto.SprintStatusUpdateRequestDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.service.SprintService;
 import lombok.RequiredArgsConstructor;
@@ -65,5 +66,16 @@ public class SprintController {
         return sprintService.addUsersToSprint(sprintId, projectId, userIds)
                 .thenReturn(ResponseEntity.ok().build());
     }
-
+    /**
+     * Bir sprint'in durumunu günceller.
+     * sprintId ve yeni durum bilgisini DTO içinde POST isteği ile alır.
+     *
+     * @param dto Sprint ID ve yeni durum bilgisini içeren DTO
+     * @return Güncellenmiş Sprint nesnesi
+     */
+    @PostMapping("/status")
+    public Mono<ResponseEntity<Sprint>> updateSprintStatus(@RequestBody SprintStatusUpdateRequestDto dto) {
+        return sprintService.updateSprintStatus(dto)
+                .map(ResponseEntity::ok);
+    }
 }

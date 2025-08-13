@@ -5,10 +5,7 @@ import com.tracker.job_ts.project.dto.ProjectDto;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.entity.ProjectTaskStatus;
 import com.tracker.job_ts.project.entity.ProjectUser;
-import com.tracker.job_ts.project.model.AssaignSprint;
-import com.tracker.job_ts.project.model.CreatedBy;
-import com.tracker.job_ts.project.model.CreatedProject;
-import com.tracker.job_ts.project.model.ProjectSystemStatus;
+import com.tracker.job_ts.project.model.*;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
@@ -17,6 +14,7 @@ import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
 import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
+import com.tracker.job_ts.sprint.dto.SprintStatusUpdateRequestDto;
 import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.entity.SprintStatus;
@@ -26,6 +24,7 @@ import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.repository.SprintUserRepository;
 import com.tracker.job_ts.sprint.util.GenerationCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -52,7 +51,8 @@ public class SprintService {
 
         return authHelperService.getAuthUser()
                 .flatMap(authUser ->
-                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), authUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                dto.getProjectId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                                 .flatMap(projectUser ->
                                         taskStatusRepository.findById(dto.getProjectTaskStatusId())
@@ -109,7 +109,8 @@ public class SprintService {
                                         return Mono.error(new IllegalAccessException("Only sprint creator can update it."));
                                     }
 
-                                    return projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), authUser.getId())
+                                    return projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                            dto.getProjectId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                             .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                                             .flatMap(projectUser ->
                                                     taskStatusRepository.findById(dto.getProjectTaskStatusId())
@@ -207,7 +208,8 @@ public class SprintService {
     public Flux<SprintDto> getNonCompletedSprintsByProjectId(String projectId) {
         return authHelperService.getAuthUser()
                 .flatMapMany(authUser ->
-                        projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                projectId, authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .thenMany(
                                         sprintRepository.findAllByCreatedProjectIdAndSprintStatusIsNot(projectId, SprintStatus.COMPLATED)
@@ -228,7 +230,8 @@ public class SprintService {
         return authHelperService.getAuthUser()
                 .flatMapMany(currentUser ->
                         // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
-                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                dto.getProjectId(), currentUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMapMany(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
@@ -263,7 +266,8 @@ public class SprintService {
         return authHelperService.getAuthUser()
                 .flatMap(currentUser ->
                         // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
-                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                dto.getProjectId(), currentUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMap(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
@@ -312,7 +316,8 @@ public class SprintService {
         return authHelperService.getAuthUser()
                 .flatMap(currentUser ->
                         // 1. Kullanıcının projenin bir üyesi olduğunu doğrula
-                        projectUserRepository.findByProjectIdAndUserId(dto.getProjectId(), currentUser.getId())
+                        projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                dto.getProjectId(), currentUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMap(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
@@ -340,5 +345,43 @@ public class SprintService {
                                 )
                 );
     }
+    /**
+     * Bir sprint'in durumunu PLANNED veya ACTIVE olarak günceller.
+     * Bu işlemi sadece PROJECT_ADMIN veya PROJECT_OWNER rolüne sahip kullanıcılar yapabilir.
+     *
+     * @param dto Yeni sprint durumunu ve sprint ID'sini içeren DTO
+     * @return Güncellenmiş Sprint nesnesi
+     */
+    public Mono<Sprint> updateSprintStatus(SprintStatusUpdateRequestDto dto) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser -> sprintRepository.findById(dto.getSprintId())
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
+                        .flatMap(sprint ->projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                        sprint.getCreatedProject().getId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
+                                        .switchIfEmpty(Mono.error(new AccessDeniedException("Only project admins or owners can change sprint status.")))
+                                        .flatMap(projectUser -> {
+                                            SprintStatus newStatus = dto.getNewStatus();
 
+                                            // Durum geçişi kontrolleri
+                                            if (newStatus == SprintStatus.ACTIVE) {
+                                                if (sprint.getSprintStatus() != SprintStatus.PLANNED) {
+                                                    return Mono.error(new IllegalStateException("Sprint must be in PLANNED status to be activated."));
+                                                }
+                                            } else if (newStatus == SprintStatus.PLANNED) {
+                                                if (sprint.getSprintStatus() != SprintStatus.ACTIVE) {
+                                                    return Mono.error(new IllegalStateException("Sprint must be in ACTIVE status to be planned."));
+                                                }
+                                            } else {
+                                                // Diğer durumlar için (örn. COMPLETED) geçersiz geçiş hatası ver
+                                                return Mono.error(new IllegalArgumentException("Invalid sprint status transition."));
+                                            }
+
+                                            // Durumu güncelle ve kaydet
+                                            sprint.setSprintStatus(newStatus);
+                                            sprint.setUpdatedAt(LocalDateTime.now());
+                                            return sprintRepository.save(sprint);
+                                        })
+                        )
+                );
+    }
 }
