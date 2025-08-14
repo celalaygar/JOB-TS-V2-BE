@@ -21,10 +21,16 @@ public class ProjectUserController {
 
     private final ProjectUserService projectUserService;
 
-    // belirli bir projedeki tüm kullanıcıları getirir.
-    @GetMapping("/get-users/project/{projectId}")
+    // belirli bir projedeki removed olmayan tüm kullanıcıları getirir.
+    @GetMapping("/get-active-users/project/{projectId}")
     public Flux<ProjectUserResponseDto> getProjectUsers(@PathVariable String projectId) {
         return projectUserService.listProjectUsers(projectId);
+    }
+
+    // belirli bir projedeki tüm kullanıcıları getirir.
+    @GetMapping("/all-users/project/{projectId}")
+    public Flux<ProjectUserResponseDto> getAllProjectUsers(@PathVariable String projectId) {
+        return projectUserService.listAllProjectUsers(projectId);
     }
     /**
      * Projeden bir kullanıcıyı çıkarır.

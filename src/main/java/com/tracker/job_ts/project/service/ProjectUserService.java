@@ -8,6 +8,7 @@ import reactor.core.publisher.Mono;
 
 public interface ProjectUserService {
     Flux<ProjectUserResponseDto> listProjectUsers(String projectId);
+    Flux<ProjectUserResponseDto> listAllProjectUsers(String projectId);
 
     Mono<Boolean> removeUserFromProject(String projectId, String userId);
 }

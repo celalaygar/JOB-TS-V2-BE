@@ -31,12 +31,10 @@ public class SprintTasktController { // Adı SprintTaskController olarak düzelt
      * @param projectId Görevlerin ait olduğu projenin ID'si
      * @return Sprint'e atanmış görevlerin DTO'ları (Flux olarak)
      */
-    @GetMapping("/sprint/{sprintId}/project/{projectId}")
+    @PostMapping("/get-all")
     public Flux<ProjectTaskDto> getTasksInSprint(
-            @PathVariable String sprintId,
-            @PathVariable String projectId) {
+            @Valid @RequestBody SprintTaskRequestDto requestDto ) {
         // DTO'yu burada oluşturup service'e gönderiyoruz
-        SprintTaskRequestDto requestDto = new SprintTaskRequestDto(sprintId, projectId, null);
         return sprintService.getProjectTasksBySprintAndProject(requestDto);
     }
 

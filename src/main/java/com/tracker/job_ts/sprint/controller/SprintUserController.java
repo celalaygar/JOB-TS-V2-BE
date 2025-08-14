@@ -77,9 +77,9 @@ public class SprintUserController {
      * @param sprintId Listelenecek sprint'in ID'si
      * @return Sprint'teki kullanıcıların DTO'ları (Flux olarak)
      */
-    @GetMapping("/{sprintId}/users")
-    public Flux<SprintUserDto> getSprintUsers(@PathVariable String sprintId) {
-        return sprintUserService.getSprintUsers(sprintId);
+    @PostMapping("/users")
+    public Flux<SprintUserDto> getSprintUsers(@RequestBody SprintUserRequestDto dto) {
+        return sprintUserService.getSprintUsers(dto.getSprintId());
     }
 
     /**

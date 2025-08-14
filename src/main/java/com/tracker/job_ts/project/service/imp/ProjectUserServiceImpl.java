@@ -32,9 +32,23 @@ public class ProjectUserServiceImpl implements ProjectUserService {
     private final ProjectUserRepository projectUserRepository;
     private final AuthHelperService authHelperService;
 
-
     @Override
     public Flux<ProjectUserResponseDto> listProjectUsers(String projectId) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser -> projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
+                        .switchIfEmpty(Mono.error(new AccessDeniedException("No access to this project.")))
+                )
+                .thenMany(projectUserRepository.findByProjectIdAndProjectSystemRoleNot(projectId, ProjectSystemRole.PROJECT_REMOVED_USER))
+                .flatMap(projectUser ->
+                        userRepository.findById(projectUser.getUserId())
+                                .map(user -> {
+                                    user.setProjectSystemRole(projectUser.getProjectSystemRole());
+                                    return ProjectUserMapper.toDto(projectUser);
+                                })
+                );
+    }
+    @Override
+    public Flux<ProjectUserResponseDto> listAllProjectUsers(String projectId) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser -> projectUserRepository.findByProjectIdAndUserId(projectId, authUser.getId())
                                 .switchIfEmpty(Mono.error(new AccessDeniedException("No access to this project.")))

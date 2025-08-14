@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface ProjectUserRepository extends ReactiveMongoRepository<ProjectUser, String> {
     Flux<ProjectUser> findByProjectId(String projectId);
+    Flux<ProjectUser> findByProjectIdAndProjectSystemRoleNot(String projectId, ProjectSystemRole projectSystemRole);
     Flux<ProjectUser> findByProjectIdAndProjectSystemRole(String projectId, ProjectSystemRole projectSystemRole);
 
     Mono<ProjectUser> findByProjectIdAndUserIdAndProjectSystemRole(String projectId, String userId, ProjectSystemRole projectSystemRole);
