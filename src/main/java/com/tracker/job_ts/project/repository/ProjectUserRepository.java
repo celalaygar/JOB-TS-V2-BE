@@ -12,7 +12,6 @@ public interface ProjectUserRepository extends ReactiveMongoRepository<ProjectUs
     Flux<ProjectUser> findByProjectId(String projectId);
     Flux<ProjectUser> findByProjectIdAndProjectSystemRoleNot(String projectId, ProjectSystemRole projectSystemRole);
     Flux<ProjectUser> findByProjectIdAndProjectSystemRole(String projectId, ProjectSystemRole projectSystemRole);
-
     Mono<ProjectUser> findByProjectIdAndUserIdAndProjectSystemRole(String projectId, String userId, ProjectSystemRole projectSystemRole);
     Mono<ProjectUser> findByProjectIdAndUserId(String projectId, String userId);
     Mono<ProjectUser> findByIdAndProjectId(String id, String projectId);
@@ -21,12 +20,7 @@ public interface ProjectUserRepository extends ReactiveMongoRepository<ProjectUs
     Flux<ProjectUser> findAllByUserId(String userId);
     Flux<ProjectUser> findAllByUserIdAndProjectSystemRoleNot(String userId, ProjectSystemRole projectSystemRole);
     Mono<ProjectUser> findByProjectIdAndEmail(String projectId, String email);
-    // Belirli bir projede belirli bir takım ID'sine sahip kullanıcıları bulma
     Flux<ProjectUser> findByProjectIdAndProjectTeamIdsContaining(String projectId, String teamId);
-
-    // Belirli bir projede belirli bir takım ID'sine sahip olmayan kullanıcıları bulma
     Flux<ProjectUser> findByProjectIdAndProjectTeamIdsNotContaining(String projectId, String teamId);
-
-    // YENİ EKLENEN METOT: Belirli bir role sahip olmayan kullanıcıyı bulma
     Mono<ProjectUser> findByProjectIdAndUserIdAndProjectSystemRoleNot(String projectId, String userId, ProjectSystemRole projectSystemRole);
 }

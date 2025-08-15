@@ -1,6 +1,7 @@
 package com.tracker.job_ts.sprint.dto;
 
 import com.tracker.job_ts.sprint.entity.SprintStatus;
+import com.tracker.job_ts.sprint.entity.SprintType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,4 +30,6 @@ public class SprintRegisterDto {
     private SprintStatus sprintStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private SprintType sprintType = SprintType.PROJECT;
+    private String projectTeamId;
 }

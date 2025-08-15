@@ -8,6 +8,7 @@ import com.tracker.job_ts.project.entity.ProjectUser;
 import com.tracker.job_ts.project.model.*;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
+import com.tracker.job_ts.project.repository.ProjectTeamRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
@@ -44,6 +45,7 @@ public class SprintService {
     private final AuthHelperService authHelperService;
     private final SprintValidator validator;
     private final ProjectTaskRepository projectTaskRepository;
+    private final ProjectTeamRepository teamRepository;
 
     private final ProjectRepository projectRepository;
 
