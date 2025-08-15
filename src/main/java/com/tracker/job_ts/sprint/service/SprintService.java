@@ -17,10 +17,7 @@ import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
 import com.tracker.job_ts.sprint.dto.SprintStatusUpdateRequestDto;
 import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
-import com.tracker.job_ts.sprint.entity.Sprint;
-import com.tracker.job_ts.sprint.entity.SprintStatus;
-import com.tracker.job_ts.sprint.entity.SprintUser;
-import com.tracker.job_ts.sprint.entity.SprintUserSystemRole;
+import com.tracker.job_ts.sprint.entity.*;
 import com.tracker.job_ts.sprint.model.TaskStatusOnCompletion;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.repository.SprintUserRepository;
@@ -55,7 +52,7 @@ public class SprintService {
         return authHelperService.getAuthUser()
                 .flatMap(authUser ->
                         projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
-                                dto.getProjectId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
+                                        dto.getProjectId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
                                 .flatMap(projectUser ->
                                         taskStatusRepository.findById(dto.getProjectTaskStatusId())
@@ -86,21 +83,64 @@ public class SprintService {
 
                                                     return sprintRepository.save(sprint)
                                                             .flatMap(savedSprint -> {
-                                                                SprintUser sprintUser = SprintUser.builder()
+                                                                // Sprint admin kullanıcısını kaydet
+                                                                Mono<SprintUser> adminUserMono = Mono.just(SprintUser.builder()
                                                                         .sprintId(savedSprint.getId())
                                                                         .projectId(dto.getProjectId())
                                                                         .createdBy(new CreatedBy(authUser))
                                                                         .sprintUserSystemRole(SprintUserSystemRole.SPRINT_ADMIN)
                                                                         .createdProject(new CreatedProject(project))
                                                                         .createdAt(LocalDateTime.now())
-                                                                        .build();
+                                                                        .updatedAt(LocalDateTime.now())
+                                                                        .build());
 
-                                                                return sprintUserRepository.save(sprintUser).thenReturn(savedSprint);
+                                                                // Diğer sprint üyelerini belirle
+                                                                Mono<List<ProjectUser>> memberUsersMono;
+                                                                if (dto.getSprintType() == SprintType.PROJECT) {
+                                                                    memberUsersMono = projectUserRepository.findByProjectIdAndProjectSystemRoleNot(
+                                                                                    dto.getProjectId(), ProjectSystemRole.PROJECT_REMOVED_USER)
+                                                                            .filter(pu -> !pu.getUserId().equals(authUser.getId())) // Admin'i listeden çıkar
+                                                                            .collectList();
+                                                                } else if (dto.getSprintType() == SprintType.TEAM) {
+                                                                    memberUsersMono = projectUserRepository.findByProjectIdAndProjectTeamIdsContaining(
+                                                                                    dto.getProjectId(), dto.getProjectTeamId())
+                                                                            .filter(pu -> !pu.getUserId().equals(authUser.getId())) // Admin'i listeden çıkar
+                                                                            .collectList();
+                                                                } else {
+                                                                    // Eğer SprintType tanımsızsa sadece admini ekle
+                                                                    memberUsersMono = Mono.just(List.of());
+                                                                }
+
+                                                                // Sprint member'larını kaydet
+                                                                Mono<List<SprintUser>> memberSprintUsersMono = memberUsersMono
+                                                                        .flatMapMany(memberUsers -> Flux.fromIterable(memberUsers)
+                                                                                .map(member -> SprintUser.builder()
+                                                                                        .sprintId(savedSprint.getId())
+                                                                                        .projectId(dto.getProjectId())
+                                                                                        .createdBy(new CreatedBy(member))
+                                                                                        .sprintUserSystemRole(SprintUserSystemRole.SPRINT_MEMBER)
+                                                                                        .createdProject(new CreatedProject(project))
+                                                                                        .createdAt(LocalDateTime.now())
+                                                                                        .updatedAt(LocalDateTime.now())
+                                                                                        .build())
+                                                                        )
+                                                                        .collectList();
+
+                                                                return Mono.zip(adminUserMono, memberSprintUsersMono)
+                                                                        .flatMap(zipped -> {
+                                                                            SprintUser adminUser = zipped.getT1();
+                                                                            List<SprintUser> memberSprintUsers = zipped.getT2();
+                                                                            List<SprintUser> allSprintUsers = new java.util.ArrayList<>();
+                                                                            allSprintUsers.add(adminUser);
+                                                                            allSprintUsers.addAll(memberSprintUsers);
+                                                                            return sprintUserRepository.saveAll(allSprintUsers).then(Mono.just(savedSprint));
+                                                                        });
                                                             });
                                                 })
                                 )
                 );
     }
+
 
     public Mono<Sprint> updateSprint(String sprintId, SprintRegisterDto dto) {
         validator.validate(dto);
