@@ -1,8 +1,6 @@
 package com.tracker.job_ts.auth.controller;
 
-import com.tracker.job_ts.auth.dto.AuthRequest;
-import com.tracker.job_ts.auth.dto.AuthResponse;
-import com.tracker.job_ts.auth.dto.RegisterRequest;
+import com.tracker.job_ts.auth.dto.*;
 import com.tracker.job_ts.auth.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -36,5 +34,9 @@ public class AuthController {
         return authService.registerViaInvitation(request)
                 .map(ResponseEntity::ok);
     }
-
+    @PostMapping("/validate-invitation-token")
+    public Mono<ResponseEntity<TokenValidationResponse>> validateInvitationToken(@RequestBody TokenValidationRequest request) {
+        return authService.validateInvitationToken(request.getToken())
+                .map(ResponseEntity::ok);
+    }
 }

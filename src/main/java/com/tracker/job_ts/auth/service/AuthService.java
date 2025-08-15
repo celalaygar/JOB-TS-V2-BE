@@ -8,6 +8,7 @@ import com.tracker.job_ts.auth.config.JWTProvider;
 import com.tracker.job_ts.auth.dto.AuthRequest;
 import com.tracker.job_ts.auth.dto.AuthResponse;
 import com.tracker.job_ts.auth.dto.RegisterRequest;
+import com.tracker.job_ts.auth.dto.TokenValidationResponse;
 import com.tracker.job_ts.auth.entity.SystemRole;
 import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.auth.exception.UnauthorizedException;
@@ -18,6 +19,7 @@ import com.tracker.job_ts.project.model.ProjectSystemRole;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -119,6 +122,49 @@ public class AuthService {
                                             }));
                 }));
     }
+    /**
+     * Davet token'ını doğrular ve ilgili bilgileri döner.
+     * @param token Doğrulanacak JWT token'ı
+     * @return Mono<TokenValidationResponse>
+     */
+    public Mono<TokenValidationResponse> validateInvitationToken(String token) {
+        return Mono.just(token)
+                .flatMap(t -> {
+                    try {
+                        jwtProvider.parseInvitationToken(t); // JWTProvider'daki token validasyonunu çağır
+                        return invitationRepository.findByTokenAndStatus(t, InvitationStatus.PENDING)
+                                .flatMap(invitation -> {
+                                    if (invitation.getTokenExpiry().isBefore(LocalDateTime.now())) {
+                                        Mono.just(TokenValidationResponse.builder()
+                                                .isValid(false)
+                                                .message("The invitation token has expired.")
+                                                .build());
+                                    }
+                                    return Mono.just(TokenValidationResponse.builder()
+                                            .isValid(true)
+                                            .token(invitation.getToken())
+                                            .invitedUserEmail(invitation.getInvitedUser().getEmail())
+                                            .message("Token is valid.")
+                                            .build());
+                                })
+                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid or already used token.")));
 
-
+                    } catch (Exception e) {
+                        log.error("Token validation failed: {}", e.getMessage());
+                        return Mono.error(new IllegalArgumentException("Token validation failed: " + e.getMessage()));
+                    }
+                })
+                .onErrorResume(IllegalArgumentException.class, e -> {
+                    // Token'ın geçersiz olduğu durumlar için hata fırlatmak yerine, false dönelim.
+                    // İstekteki "hata olursa hata atmanı istiyorum false dönülebilir ve mesaj dönmeni istiyorum" talebine istinaden bu şekilde bir yaklaşım sergiliyorum.
+                    // Hata fırlatma tercihini ise `Controller` seviyesinde ResponseEntity ile yönetebiliriz.
+                    // Burada, `false` döndürerek daha kontrollü bir akış sağlıyoruz.
+                    return Mono.just(TokenValidationResponse.builder()
+                            .isValid(false)
+                            .token(token)
+                            .invitedUserEmail(null)
+                            .message(e.getMessage())
+                            .build());
+                });
+    }
 }
