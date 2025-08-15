@@ -9,6 +9,7 @@ import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
+import com.tracker.job_ts.sprint.dto.SprintUserBaseResponse;
 import com.tracker.job_ts.sprint.dto.SprintUserBulkRequestDto;
 import com.tracker.job_ts.sprint.dto.SprintUserDto;
 import com.tracker.job_ts.sprint.dto.SprintUserRequestDto;
@@ -147,7 +148,7 @@ public class SprintUserService {
      * @param dto Çıkartılacak kullanıcı ID'leri
      * @return Başarı durumunda boş Mono
      */
-    public Mono<Void> removeBulkProjectUsersFromSprint(SprintUserBulkRequestDto dto) {
+    public Mono<SprintUserBaseResponse> removeBulkProjectUsersFromSprint(SprintUserBulkRequestDto dto) {
         return authHelperService.getAuthUser()
                 .flatMap(currentUser -> projectRepository.findById(dto.getProjectId())
                         .switchIfEmpty(Mono.error(new NoSuchElementException("Project not found with ID: " + dto.getProjectId())))
@@ -158,9 +159,16 @@ public class SprintUserService {
                                         .flatMapMany(sprint -> Flux.fromIterable(dto.getUserIds())
                                                 .flatMap(userId -> sprintUserRepository.findBySprintIdAndCreatedByIdAndSprintUserSystemRole(dto.getSprintId(), userId, SprintUserSystemRole.SPRINT_MEMBER)
                                                         .flatMap(sprintUserRepository::delete)
-                                                        .switchIfEmpty(Mono.empty()) // Zaten ekli olmayanları atla
+                                                        .then(Mono.just(true)) // Silme başarılı olduğunda true döndür
+                                                        .switchIfEmpty(Mono.just(false)) // Kayıt bulunamazsa false döndür
                                                 )
-                                        ).then()
+                                        )
+                                        // Tüm Flux elemanlarının sonuçlarını topla. Her bir silme işlemi true döndürdüğünde toplu işlemin başarılı olduğunu varsayabiliriz.
+                                        .collectList()
+                                        .flatMap(results -> {
+                                            boolean success = !results.contains(false);
+                                            return Mono.just(new SprintUserBaseResponse(success));
+                                        }) // Herhangi bir false varsa genel sonuç false olsun
                                 )
                         )
                 );

@@ -3,6 +3,7 @@ package com.tracker.job_ts.sprint.dto;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.sprint.entity.SprintUser;
+import com.tracker.job_ts.sprint.entity.SprintUserSystemRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,7 @@ public class SprintUserDto {
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private SprintUserSystemRole sprintUserSystemRole;
 
     public SprintUserDto(SprintUser sprintUser) {
         this.id = sprintUser.getId();
@@ -41,5 +43,6 @@ public class SprintUserDto {
         this.notes = sprintUser.getNotes();
         this.createdAt = sprintUser.getCreatedAt();
         this.updatedAt = sprintUser.getUpdatedAt();
+        this.sprintUserSystemRole = sprintUser.getSprintUserSystemRole();
     }
 }

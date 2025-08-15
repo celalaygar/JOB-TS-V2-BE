@@ -4,6 +4,7 @@ package com.tracker.job_ts.sprint.controller;
 
 
 import com.tracker.job_ts.base.util.ApiPaths;
+import com.tracker.job_ts.sprint.dto.SprintUserBaseResponse;
 import com.tracker.job_ts.sprint.dto.SprintUserBulkRequestDto;
 import com.tracker.job_ts.sprint.dto.SprintUserDto;
 import com.tracker.job_ts.sprint.dto.SprintUserRequestDto;
@@ -66,8 +67,7 @@ public class SprintUserController {
      * @return Başarı durumunda boş Mono (204 No Content)
      */
     @PostMapping("/bulk-remove")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> removeBulkProjectUsersFromSprint(@RequestBody SprintUserBulkRequestDto dto) {
+    public Mono<SprintUserBaseResponse> removeBulkProjectUsersFromSprint(@RequestBody SprintUserBulkRequestDto dto) {
         return sprintUserService.removeBulkProjectUsersFromSprint(dto);
     }
 
