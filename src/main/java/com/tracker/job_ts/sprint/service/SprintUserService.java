@@ -83,7 +83,7 @@ public class SprintUserService {
      */
     public Mono<Void> removeProjectUserFromSprint(String sprintId, String userId) {
         return authHelperService.getAuthUser()
-                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndCreatedById(sprintId, userId)
+                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndCreatedByIdAndSprintUserSystemRole(sprintId, userId, SprintUserSystemRole.SPRINT_MEMBER)
                         .switchIfEmpty(Mono.error(new NoSuchElementException("User with ID " + userId + " not found in sprint " + sprintId)))
                         .flatMap(sprintUser -> projectUserRepository.findByProjectIdAndUserId(sprintUser.getProjectId(), currentUser.getId())
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("Current user is not a member of project " + sprintUser.getProjectId())))
@@ -156,7 +156,7 @@ public class SprintUserService {
                                 .flatMap(actingProjectUser -> sprintRepository.findById(dto.getSprintId())
                                         .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
                                         .flatMapMany(sprint -> Flux.fromIterable(dto.getUserIds())
-                                                .flatMap(userId -> sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), userId)
+                                                .flatMap(userId -> sprintUserRepository.findBySprintIdAndCreatedByIdAndSprintUserSystemRole(dto.getSprintId(), userId, SprintUserSystemRole.SPRINT_MEMBER)
                                                         .flatMap(sprintUserRepository::delete)
                                                         .switchIfEmpty(Mono.empty()) // Zaten ekli olmayanları atla
                                                 )
