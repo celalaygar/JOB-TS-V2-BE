@@ -88,7 +88,7 @@ public class AuthService {
         String projectId = claims.get("projectId", String.class);
 
         return userRepository.findByEmail(email)
-                .flatMap(existing -> Mono.error(new RuntimeException("Bu email ile kayıtlı bir kullanıcı zaten var.")))
+                .flatMap(existing -> Mono.error(new RuntimeException("There is already a user registered with this email address.\n")))
                 .switchIfEmpty(Mono.defer(() -> {
                     User newUser = registerRequestToUserMapper.map(request, email);
                     newUser.setCreatedAt(LocalDateTime.now());
@@ -100,7 +100,9 @@ public class AuthService {
                                             .flatMap(invitation -> {
                                                 invitation.setStatus(InvitationStatus.ACCEPTED);
                                                 invitation.setInvitedUser(UserSummaryMapper.mapUser(savedUser));
-
+                                                if (invitation.getTokenExpiry().isBefore(LocalDateTime.now())) {
+                                                    return Mono.error(new Exception("Token is expired"));
+                                                }
                                                 ProjectUser pu = ProjectUser.builder()
                                                         .userId(savedUser.getId())
                                                         .email(savedUser.getEmail())
