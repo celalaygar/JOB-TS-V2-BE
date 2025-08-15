@@ -10,8 +10,8 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface SprintUserRepository extends ReactiveMongoRepository<SprintUser, String> {
     Flux<SprintUser> findBySprintId(String sprintId);
-    Mono<SprintUser> findBySprintIdAndUserId(String sprintId, String userId);
-    Flux<SprintUser> findByUserId( String userId); // Bu metodun adını findByUserId olarak düzeltmek daha mantıklı olabilir.
+    Mono<SprintUser> findBySprintIdAndCreatedById(String sprintId, String userId);
+    Flux<SprintUser> findByCreatedById( String userId); // Bu metodun adını findByUserId olarak düzeltmek daha mantıklı olabilir.
     Flux<SprintUser> findByCreatedProjectId(String projectId); // createdProject.id alanı üzerinden arama yapacaktır.
     Flux<SprintUser> findBySprintIdAndProjectId(String sprintId, String projectId);
 }

@@ -18,7 +18,7 @@ public class SprintUserDto {
     private String id;
     private String sprintId;
     private String projectId;
-    private CreatedBy user;
+    private CreatedBy createdBy;
     private CreatedProject createdProject;
     private Instant assignmentDate;
     private String roleInSprint;
@@ -32,7 +32,7 @@ public class SprintUserDto {
         this.id = sprintUser.getId();
         this.sprintId = sprintUser.getSprintId();
         this.projectId = sprintUser.getProjectId();
-        this.user = sprintUser.getUser();
+        this.createdBy = sprintUser.getCreatedBy();
         this.createdProject = sprintUser.getCreatedProject();
         this.assignmentDate = sprintUser.getAssignmentDate();
         this.roleInSprint = sprintUser.getRoleInSprint();

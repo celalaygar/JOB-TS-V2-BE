@@ -14,6 +14,7 @@ import com.tracker.job_ts.sprint.dto.SprintUserDto;
 import com.tracker.job_ts.sprint.dto.SprintUserRequestDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.entity.SprintUser;
+import com.tracker.job_ts.sprint.entity.SprintUserSystemRole;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.repository.SprintUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -51,18 +52,16 @@ public class SprintUserService {
                                         .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId()))) // Tipi açıkça belirtildi
                                         .flatMap(sprint -> projectUserRepository.findByProjectIdAndUserId(project.getId(), dto.getUserId())
                                                 .switchIfEmpty(Mono.error(new NoSuchElementException("User with ID " + dto.getUserId() + " is not a member of project " + dto.getProjectId()))) // Tipi açıkça belirtildi
-                                                .flatMap(userToAddAsProjectUser -> sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), dto.getUserId())
+                                                .flatMap(userToAddAsProjectUser -> sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), dto.getUserId())
                                                         .flatMap(existingSprintUser -> Mono.<SprintUserDto>error(new IllegalArgumentException("User with ID " + dto.getUserId() + " is already assigned to sprint " + dto.getSprintId()))) // En kritik nokta burasıydı!
                                                         .switchIfEmpty(Mono.defer(() -> {
                                                             SprintUser sprintUser = SprintUser.builder()
                                                                     .sprintId(dto.getSprintId())
                                                                     .projectId(dto.getProjectId())
-                                                                    .user(new CreatedBy(userToAddAsProjectUser))
+                                                                    .createdBy(new CreatedBy(userToAddAsProjectUser))
                                                                     .createdProject(new CreatedProject(project))
                                                                     .assignmentDate(Instant.now())
-                                                                    .roleInSprint(dto.getRoleInSprint() != null ? dto.getRoleInSprint() : "Member")
-                                                                    .statusInSprint(dto.getStatusInSprint() != null ? dto.getStatusInSprint() : "Active")
-                                                                    .estimatedEffort(dto.getEstimatedEffort())
+                                                                    .sprintUserSystemRole(SprintUserSystemRole.SPRINT_MEMBER)
                                                                     .notes(dto.getNotes())
                                                                     .createdAt(LocalDateTime.now())
                                                                     .updatedAt(LocalDateTime.now())
@@ -84,7 +83,7 @@ public class SprintUserService {
      */
     public Mono<Void> removeProjectUserFromSprint(String sprintId, String userId) {
         return authHelperService.getAuthUser()
-                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndUserId(sprintId, userId)
+                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndCreatedById(sprintId, userId)
                         .switchIfEmpty(Mono.error(new NoSuchElementException("User with ID " + userId + " not found in sprint " + sprintId)))
                         .flatMap(sprintUser -> projectUserRepository.findByProjectIdAndUserId(sprintUser.getProjectId(), currentUser.getId())
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("Current user is not a member of project " + sprintUser.getProjectId())))
@@ -110,7 +109,7 @@ public class SprintUserService {
                                         .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
                                         .flatMapMany(sprint -> Flux.fromIterable(dto.getUserIds())
                                                 .flatMap(userId ->
-                                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), userId)
+                                                        sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), userId)
                                                                 .flatMap(existing -> {
                                                                     // Kullanıcı zaten ekliyse atla (hata fırlatma)
                                                                     return Mono.<SprintUserDto>empty(); // Tipi açıkça belirtildi
@@ -121,11 +120,10 @@ public class SprintUserService {
                                                                                     SprintUser sprintUser = SprintUser.builder()
                                                                                             .sprintId(dto.getSprintId())
                                                                                             .projectId(dto.getProjectId())
-                                                                                            .user(new CreatedBy(userToAddAsProjectUser))
+                                                                                            .createdBy(new CreatedBy(userToAddAsProjectUser))
                                                                                             .createdProject(new CreatedProject(project))
                                                                                             .assignmentDate(Instant.now())
-                                                                                            .roleInSprint(dto.getRoleInSprint() != null ? dto.getRoleInSprint() : "Member")
-                                                                                            .statusInSprint(dto.getStatusInSprint() != null ? dto.getStatusInSprint() : "Active")
+                                                                                            .sprintUserSystemRole(SprintUserSystemRole.SPRINT_MEMBER)
                                                                                             .createdAt(LocalDateTime.now())
                                                                                             .updatedAt(LocalDateTime.now())
                                                                                             .build();
@@ -158,7 +156,7 @@ public class SprintUserService {
                                 .flatMap(actingProjectUser -> sprintRepository.findById(dto.getSprintId())
                                         .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found with ID: " + dto.getSprintId())))
                                         .flatMapMany(sprint -> Flux.fromIterable(dto.getUserIds())
-                                                .flatMap(userId -> sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), userId)
+                                                .flatMap(userId -> sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), userId)
                                                         .flatMap(sprintUserRepository::delete)
                                                         .switchIfEmpty(Mono.empty()) // Zaten ekli olmayanları atla
                                                 )
@@ -196,7 +194,7 @@ public class SprintUserService {
      */
     public Mono<SprintUserDto> getSprintUser(String sprintId, String userId) {
         return authHelperService.getAuthUser()
-                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndUserId(sprintId, userId)
+                .flatMap(currentUser -> sprintUserRepository.findBySprintIdAndCreatedById(sprintId, userId)
                         .switchIfEmpty(Mono.error(new NoSuchElementException("User with ID " + userId + " not found in sprint " + sprintId)))
                         .flatMap(sprintUser -> projectUserRepository.findByProjectIdAndUserId(sprintUser.getProjectId(), currentUser.getId())
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("Current user is not a member of the project this sprint user belongs to.")))

@@ -24,9 +24,9 @@ public class SprintUser {
     private String sprintId; // İlişkili sprint'in ID'si
     private String projectId; // İlişkili projenin ID'si
 
-    private CreatedBy user; // Atanan kullanıcı (CreatedBy modelini kullanıyor)
+    private CreatedBy createdBy; // Atanan kullanıcı (CreatedBy modelini kullanıyor)
     private CreatedProject createdProject; // İlişkili projenin bilgisi (CreatedProject modelini kullanıyor)
-
+    private SprintUserSystemRole sprintUserSystemRole;
     private Instant assignmentDate;
     private String roleInSprint; // Örneğin, "Developer", "Tester"
     private String statusInSprint; // Örneğin, "Active", "Inactive"

@@ -19,6 +19,7 @@ import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
 import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.entity.SprintStatus;
 import com.tracker.job_ts.sprint.entity.SprintUser;
+import com.tracker.job_ts.sprint.entity.SprintUserSystemRole;
 import com.tracker.job_ts.sprint.model.TaskStatusOnCompletion;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
 import com.tracker.job_ts.sprint.repository.SprintUserRepository;
@@ -86,7 +87,8 @@ public class SprintService {
                                                                 SprintUser sprintUser = SprintUser.builder()
                                                                         .sprintId(savedSprint.getId())
                                                                         .projectId(dto.getProjectId())
-                                                                        .user(new CreatedBy(authUser))
+                                                                        .createdBy(new CreatedBy(authUser))
+                                                                        .sprintUserSystemRole(SprintUserSystemRole.SPRINT_ADMIN)
                                                                         .createdProject(new CreatedProject(project))
                                                                         .createdAt(LocalDateTime.now())
                                                                         .build();
@@ -149,7 +151,7 @@ public class SprintService {
                 .map(pu -> SprintUser.builder()
                         .sprintId(sprintId)
                         .projectId(projectId)
-                        .user(new CreatedBy(pu))
+                        .createdBy(new CreatedBy(pu))
                         .createdProject(new CreatedProject(pu.getProjectId(), null))
                         .build())
                 .collectList()
@@ -181,7 +183,7 @@ public class SprintService {
     public Flux<SprintDto> getAll() {
         return authHelperService.getAuthUser()
                 .flatMapMany(authUser ->
-                        sprintUserRepository.findByUserId(authUser.getId())
+                        sprintUserRepository.findByCreatedById(authUser.getId())
                                 .map(SprintUser::getSprintId)
                                 .distinct()
                                 .collectList()
@@ -195,7 +197,7 @@ public class SprintService {
     public Mono<SprintDto> getById(String sprintId) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser ->
-                        sprintUserRepository.findBySprintIdAndUserId(sprintId, authUser.getId())
+                        sprintUserRepository.findBySprintIdAndCreatedById(sprintId, authUser.getId())
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not authorized to view this sprint.")))
                                 .flatMap(sprintUser ->
                                         sprintRepository.findById(sprintId)
@@ -235,7 +237,7 @@ public class SprintService {
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMapMany(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
-                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                        sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), currentUser.getId())
                                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
                                                 .flatMapMany(sprintUser ->
                                                         // 3. Sprint'in varlığını doğrula (ve projenin sprint'e ait olduğunu kontrol et)
@@ -271,7 +273,7 @@ public class SprintService {
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMap(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
-                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                        sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), currentUser.getId())
                                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
                                                 .flatMap(sprintUser ->
                                                         // 3. Sprint'in varlığını doğrula
@@ -321,7 +323,7 @@ public class SprintService {
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .flatMap(projectUser ->
                                         // 2. Kullanıcının aynı zamanda sprint'in bir üyesi olduğunu doğrula
-                                        sprintUserRepository.findBySprintIdAndUserId(dto.getSprintId(), currentUser.getId())
+                                        sprintUserRepository.findBySprintIdAndCreatedById(dto.getSprintId(), currentUser.getId())
                                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this sprint.")))
                                                 .flatMap(sprintUser ->
                                                         // 3. Sprint'in varlığını doğrula
