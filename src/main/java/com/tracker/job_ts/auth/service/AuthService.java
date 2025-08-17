@@ -133,17 +133,17 @@ public class AuthService {
         return Mono.just(token)
                 .flatMap(t -> {
                     try {
-                        jwtProvider.parseInvitationToken(t); // JWTProvider'daki token validasyonunu çağır
+                         jwtProvider.parseInvitationToken(t); // JWTProvider'daki token validasyonunu çağır
                         return invitationRepository.findByTokenAndStatus(t, InvitationStatus.PENDING)
                                 .flatMap(invitation -> {
                                     if (invitation.getTokenExpiry().isBefore(LocalDateTime.now())) {
                                         Mono.just(TokenValidationResponse.builder()
-                                                .isValid(false)
+                                                .valid(false)
                                                 .message("The invitation token has expired.")
                                                 .build());
                                     }
                                     return Mono.just(TokenValidationResponse.builder()
-                                            .isValid(true)
+                                            .valid(true)
                                             .token(invitation.getToken())
                                             .invitedUserEmail(invitation.getInvitedUser().getEmail())
                                             .message("Token is valid.")
@@ -162,7 +162,7 @@ public class AuthService {
                     // Hata fırlatma tercihini ise `Controller` seviyesinde ResponseEntity ile yönetebiliriz.
                     // Burada, `false` döndürerek daha kontrollü bir akış sağlıyoruz.
                     return Mono.just(TokenValidationResponse.builder()
-                            .isValid(false)
+                            .valid(false)
                             .token(token)
                             .invitedUserEmail(null)
                             .message(e.getMessage())
