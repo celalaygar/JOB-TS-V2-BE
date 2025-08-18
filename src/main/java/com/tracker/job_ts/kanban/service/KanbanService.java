@@ -1,11 +1,10 @@
 package com.tracker.job_ts.kanban.service;
 
 import com.tracker.job_ts.auth.service.AuthHelperService;
-import com.tracker.job_ts.backlog.dto.BacklogTaskFilterRequestDto;
 import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.kanban.dto.KanbanTaskFilterRequestDto;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;

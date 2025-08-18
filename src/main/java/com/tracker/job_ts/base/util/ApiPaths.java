@@ -9,9 +9,14 @@ public class ApiPaths {
     private static final String SPRINT_TASK_PATH = "/sprint-task";
     private static final String PROJECT_TASK_PATH = "/project-task";
     private static final String SPRINT_USER_PATH = "/sprint-user";
+    private static final String TASK_COMMENT_PATH = "/task-comment";
 
     public static final class ProjectsCtrl {
         public static final String CTRL = BASE_PATH_V2 + PROJECTS_PATH;
+    }
+
+    public static final class TaskCommentCtrl {
+        public static final String CTRL = BASE_PATH_V2 + TASK_COMMENT_PATH;
     }
 
     public static final class KanbanCtrl {

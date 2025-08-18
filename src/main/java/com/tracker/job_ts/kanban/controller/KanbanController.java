@@ -1,13 +1,11 @@
 package com.tracker.job_ts.kanban.controller;
 
 
-import com.tracker.job_ts.backlog.dto.BacklogTaskFilterRequestDto;
-import com.tracker.job_ts.backlog.service.BacklogService;
 import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.base.util.ApiPaths;
 import com.tracker.job_ts.kanban.dto.KanbanTaskFilterRequestDto;
 import com.tracker.job_ts.kanban.service.KanbanService;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

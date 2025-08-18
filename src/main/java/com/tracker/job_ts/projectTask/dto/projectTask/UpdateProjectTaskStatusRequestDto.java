@@ -1,4 +1,4 @@
-package com.tracker.job_ts.projectTask.dto;
+package com.tracker.job_ts.projectTask.dto.projectTask;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

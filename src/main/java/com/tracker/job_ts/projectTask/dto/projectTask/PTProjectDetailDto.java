@@ -1,4 +1,4 @@
-package com.tracker.job_ts.projectTask.dto;
+package com.tracker.job_ts.projectTask.dto.projectTask;
 
 import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.project.entity.Project;

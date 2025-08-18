@@ -1,7 +1,7 @@
 package com.tracker.job_ts.projectTask.service;
 
 
-import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskRequestDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;

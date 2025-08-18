@@ -1,6 +1,5 @@
 package com.tracker.job_ts.projectTask.service;
 
-import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.auth.service.AuthHelperService;
 import com.tracker.job_ts.backlog.entity.Backlog;
 import com.tracker.job_ts.backlog.repository.BacklogRepository;
@@ -13,10 +12,10 @@ import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
-import com.tracker.job_ts.projectTask.dto.UpdateProjectTaskStatusRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskFltreRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.UpdateProjectTaskStatusRequestDto;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
 import com.tracker.job_ts.projectTask.model.ParentTask;
 import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
@@ -38,7 +37,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;

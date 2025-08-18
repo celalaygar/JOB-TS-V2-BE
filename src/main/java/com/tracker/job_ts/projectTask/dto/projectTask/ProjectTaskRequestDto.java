@@ -1,4 +1,4 @@
-package com.tracker.job_ts.projectTask.dto;
+package com.tracker.job_ts.projectTask.dto.projectTask;
 
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.projectTask.model.ProjectTaskPriority;
@@ -8,19 +8,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjectTaskFltreRequestDto implements Serializable {
+public class ProjectTaskRequestDto {
+    private String id;
     private String title;
     private String description;
     private ProjectTaskPriority priority;
     private ProjectTaskType taskType;
+    private ProjectTaskStatusDto projectTaskStatus;
     private String projectTaskStatusId;
     private String projectId;
+    private CreatedBy assignee;
     private String assigneeId;
     private String sprintId;
     private String parentTaskId;

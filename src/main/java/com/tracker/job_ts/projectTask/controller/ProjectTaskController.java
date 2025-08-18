@@ -2,13 +2,12 @@ package com.tracker.job_ts.projectTask.controller;
 
 import com.tracker.job_ts.base.model.PagedResult;
 import com.tracker.job_ts.base.util.ApiPaths;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskFltreRequestDto;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskRequestDto;
-import com.tracker.job_ts.projectTask.dto.UpdateProjectTaskStatusRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskFltreRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskRequestDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.UpdateProjectTaskStatusRequestDto;
 import com.tracker.job_ts.projectTask.service.ProjectTaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;

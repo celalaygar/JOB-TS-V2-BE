@@ -1,7 +1,6 @@
 package com.tracker.job_ts.sprint.service;
 
 import com.tracker.job_ts.auth.service.AuthHelperService;
-import com.tracker.job_ts.project.dto.ProjectDto;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.entity.ProjectTaskStatus;
 import com.tracker.job_ts.project.entity.ProjectUser;
@@ -10,8 +9,7 @@ import com.tracker.job_ts.project.repository.ProjectRepository;
 import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectTeamRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
-import com.tracker.job_ts.projectTask.entity.ProjectTask;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
 import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
 import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;

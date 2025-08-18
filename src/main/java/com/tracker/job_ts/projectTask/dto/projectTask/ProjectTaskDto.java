@@ -1,21 +1,15 @@
-package com.tracker.job_ts.projectTask.dto;
+package com.tracker.job_ts.projectTask.dto.projectTask;
 
-import com.tracker.job_ts.auth.entity.User;
 import com.tracker.job_ts.project.entity.Project;
 import com.tracker.job_ts.project.model.AssaignSprint;
 import com.tracker.job_ts.project.model.CreatedBy;
 import com.tracker.job_ts.project.model.CreatedProject;
 import com.tracker.job_ts.projectTask.entity.ProjectTask;
-import com.tracker.job_ts.projectTask.entity.ProjectTaskComment;
 import com.tracker.job_ts.projectTask.model.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor

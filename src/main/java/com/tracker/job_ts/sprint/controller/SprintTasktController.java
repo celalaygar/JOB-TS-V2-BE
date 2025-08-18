@@ -1,17 +1,14 @@
 package com.tracker.job_ts.sprint.controller;
 
 import com.tracker.job_ts.base.util.ApiPaths;
-import com.tracker.job_ts.sprint.dto.SprintDto;
-import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
 import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
-import com.tracker.job_ts.sprint.entity.Sprint;
 import com.tracker.job_ts.sprint.service.SprintService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import com.tracker.job_ts.projectTask.dto.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
 import org.springframework.http.HttpStatus;
 
 
