@@ -33,7 +33,7 @@ public class TaskCommentController {
     }
 
     // Yorumu Güncelleme
-    @PutMapping("/{commentId}/task/{taskId}")
+    @PutMapping("/update/{commentId}/task/{taskId}")
     public Mono<ResponseEntity<TaskCommentResponseDto>> updateComment(
             @PathVariable String commentId,
             @PathVariable String taskId,
@@ -44,9 +44,8 @@ public class TaskCommentController {
     }
 
     // Yorumu Silme
-    @DeleteMapping("/{commentId}/task/{taskId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public Mono<Void> deleteComment(
+    @DeleteMapping("/delete/{commentId}/task/{taskId}")
+    public Mono<Boolean> deleteComment(
             @PathVariable String commentId,
             @PathVariable String taskId) {
         return taskCommentService.deleteComment(commentId, taskId);

@@ -91,7 +91,7 @@ public class TaskCommentService {
     }
 
     // Yorumu Silme
-    public Mono<Void> deleteComment(String commentId, String taskId) {
+    public Mono<Boolean> deleteComment(String commentId, String taskId) {
         return authHelperService.getAuthUser()
                 .flatMap(authUser -> taskCommentRepository.findByIdAndTaskId(commentId, taskId)
                         .switchIfEmpty(Mono.error(new NoSuchElementException("Comment not found for the given task.")))
@@ -105,7 +105,7 @@ public class TaskCommentService {
                             return projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
                                             existingComment.getCreatedProject().getId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                     .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
-                                    .flatMap(projectUser -> taskCommentRepository.delete(existingComment));
+                                    .flatMap(projectUser -> taskCommentRepository.delete(existingComment).thenReturn(true));
                         })
                 );
     }
