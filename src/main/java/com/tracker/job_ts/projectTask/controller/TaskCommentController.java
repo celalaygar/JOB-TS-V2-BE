@@ -21,8 +21,7 @@ public class TaskCommentController {
     private final TaskCommentService taskCommentService;
 
     // Yorum Ekleme
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/add")
     public Mono<TaskCommentResponseDto> addComment(@Valid @RequestBody TaskCommentRequestDto dto) {
         return taskCommentService.addComment(dto);
     }
