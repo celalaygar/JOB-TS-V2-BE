@@ -1,0 +1,38 @@
+version: '3.9'
+services:
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Web Console
+    volumes:
+      - minio_data:/data
+volumes:
+  minio_data:
+
+
+
+
+
+
+
+
+
+
+#
+#docker run -d -p 9000:9000 -p 9001:9001 \
+#  -e "MINIO_ROOT_USER=minioadmin" \
+#  -e "MINIO_ROOT_PASSWORD=minioadmin" \
+#  quay.io/minio/minio server /data --console-address ":9001"
+#
+#    UI: http://localhost:9001
+#
+#Access key: minioadmin
+#
+#Secret key: minioadmin

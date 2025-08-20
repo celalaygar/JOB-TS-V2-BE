@@ -1,6 +1,7 @@
 package com.tracker.job_ts.auth.dto;
 
 import com.tracker.job_ts.auth.entity.SystemRole;
+import com.tracker.job_ts.auth.entity.UserDepartment;
 import lombok.Data;
 import lombok.ToString;
 
@@ -20,4 +21,5 @@ public class RegisterRequest {
     private Date dateOfBirth;
     private String gender;
     private String token;
+    private UserDepartment department;
 }

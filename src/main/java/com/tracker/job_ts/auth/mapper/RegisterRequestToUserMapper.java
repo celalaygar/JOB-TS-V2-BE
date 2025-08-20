@@ -31,6 +31,7 @@ public class RegisterRequestToUserMapper {
                 .phone(request.getPhone())
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
+                .department(request.getDepartment())
                 .build();
     }
 

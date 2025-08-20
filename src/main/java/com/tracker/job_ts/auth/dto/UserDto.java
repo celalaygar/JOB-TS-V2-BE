@@ -2,6 +2,7 @@ package com.tracker.job_ts.auth.dto;
 
 import com.tracker.job_ts.auth.entity.SystemRole;
 import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.auth.entity.UserDepartment;
 import com.tracker.job_ts.project.model.ProjectSystemRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,9 +27,8 @@ public class UserDto {
     private String lastname;
     private String password;
     private Set<SystemRole> systemRoles;
-
     private String status;
-    private String department;
+    private UserDepartment department;
     private String phone;
     private Date dateOfBirth;
     private String gender;

@@ -29,7 +29,7 @@ public class User {
     private String teamRole;
     private String companyRole;
     private String status;
-    private String department;
+    private UserDepartment department;
     private String phone;
     private Date dateOfBirth;
     private String gender;
