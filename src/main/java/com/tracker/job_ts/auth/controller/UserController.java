@@ -30,8 +30,8 @@ public class UserController {
 
 
     @GetMapping("/profile")
-    public Mono<User> getUserProfile() {
-        return authHelperService.getAuthUser();
+    public Mono<UserDto> getUserProfile() {
+        return authHelperService.getAuthUser().map(UserDto::new);
     }
 
     /**
