@@ -68,5 +68,21 @@ public class EmailServiceImpl implements EmailService {
             }
         });
     }
-
+    @Override
+    public Mono<Void> sendCustomEmail(String to, String subject, String content) {
+        return Mono.fromRunnable(() -> {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(to);
+                message.setFrom(from);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                System.out.println("[EMAIL SENT] Custom email sent to: " + to + " with subject: " + subject);
+            } catch (Exception e) {
+                System.err.println("[EMAIL ERROR] Failed to send custom email to: " + to);
+                e.printStackTrace();
+            }
+        });
+    }
 }

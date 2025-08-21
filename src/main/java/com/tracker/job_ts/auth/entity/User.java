@@ -38,4 +38,13 @@ public class User {
     private LocalDateTime createdAt;
     private ProjectSystemRole projectSystemRole;
     private LocalDateTime updatedAt;
+
+    // New fields for email verification code
+    private String emailVerificationCode;
+    private LocalDateTime emailVerificationCodeSentAt;
+
+    // Yeni alanlar
+    private String newEmailPending;
+    private String emailChangeToken;
+    private LocalDateTime emailChangeTokenSentAt;
 }

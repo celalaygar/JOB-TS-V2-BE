@@ -25,18 +25,22 @@ public class JWTProvider {
     private static String CLAIM_KEY = "systemRoles";
     @Value("${jwt.secret}")
     private String SECRET ;
-    @Value("${jwt.secret}")
+    @Value("${jwt.invitation-secret}")
     private String INVITATION_SECRET ;
+    @Value("${jwt.email-change-secret}")
+    private String EMAIL_CHANGE_SECRET ;
 
     @Value("${jwt.expiredDay}")
     private Long expiredDay ;
     private SecretKey SECRET_KEY ;
     private SecretKey INVITATION_SECRET_KEY ;
+    private SecretKey EMAIL_CHANGE_SECRET_KEY;
 
     @PostConstruct
     public void init() {
         SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
-        INVITATION_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
+        INVITATION_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(INVITATION_SECRET));
+        EMAIL_CHANGE_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(EMAIL_CHANGE_SECRET));
     }
 
     public String generateToken(String email, List<SystemRole> roles) {
@@ -160,4 +164,44 @@ public class JWTProvider {
         }
     }
 
+
+    /**
+     * Generates a special token for the email change confirmation link.
+     *
+     * @param userId The ID of the user whose email is being changed.
+     * @param newEmail The new email address.
+     * @return The signed JWT string.
+     */
+    public String generateEmailChangeToken(String userId, String newEmail) {
+        return Jwts.builder()
+                .setSubject(userId)
+                .claim("newEmail", newEmail)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 minutes expiration
+                .signWith(SignatureAlgorithm.HS512, EMAIL_CHANGE_SECRET_KEY)
+                .compact();
+    }
+
+    // You'll also need a method to parse this token, similar to parseInvitationToken
+    public Claims parseEmailChangeToken(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(EMAIL_CHANGE_SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredJwtTokenException("Email change link has expired.");
+        } catch (MalformedJwtException e) {
+            throw new MalformedJwtTokenException("Invalid token format.");
+        } catch (UnsupportedJwtException e) {
+            throw new UnsupportedJwtTokenException("Unsupported token type.");
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentTokenException("Token is empty or invalid.");
+        } catch (SecurityException e) {
+            throw new SecurityJwtTokenException("Token signature could not be verified.");
+        } catch (Exception e) {
+            throw new UnauthorizedException("An error occurred during token validation.");
+        }
+    }
 }

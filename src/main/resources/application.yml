@@ -39,6 +39,7 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET}
   invitation-secret: ${INVITATION_SECRET}
+  email-change-secret: ${EMAIL_CHANGE_SECRET}
   expiredDay: ${JWT_EXPIRED_DAY}
 
 frontend:
