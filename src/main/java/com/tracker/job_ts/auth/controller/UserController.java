@@ -25,13 +25,14 @@ import java.util.Set;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
+    private final AuthHelperService authHelperService;
 
-    /**
-     * Kimliği doğrulanmış kullanıcının kendi profil bilgilerini güncellemek için
-     * kullanılan REST uç noktasıdır.
-     * @param dto Güncellenecek verileri içeren istek gövdesi.
-     * @return Güncelleme başarılı olursa 200 OK HTTP durum kodu ve güncellenmiş UserDto nesnesi döndürür.
-     */
+
+    @GetMapping("/profile")
+    public Mono<User> getUserProfile() {
+        return authHelperService.getAuthUser();
+    }
 
     /**
      * Kimliği doğrulanmış kullanıcının kendi profil bilgilerini güncellemek için
