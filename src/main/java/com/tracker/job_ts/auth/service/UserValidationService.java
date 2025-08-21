@@ -31,22 +31,18 @@ public class UserValidationService {
         // bir Mono içinde uygularız.
         return Mono.just(dto)
                 .flatMap(request -> {
-                    // E-posta alanının güncellenmeyeceğini garanti eder.
                     if (StringUtils.hasText(request.getEmail())) {
                         return Mono.error(new ValidationException("E-posta adresi bu servis ile güncellenemez."));
                     }
 
-                    // Şifre alanının güncellenmeyeceğini garanti eder.
                     if (StringUtils.hasText(request.getPassword())) {
                         return Mono.error(new ValidationException("Şifre bu servis ile güncellenemez."));
                     }
 
-                    // Telefon numarası varsa formatını kontrol eder.
                     if (StringUtils.hasText(request.getPhone()) && !PHONE_PATTERN.matcher(request.getPhone()).matches()) {
                         return Mono.error(new ValidationException("Geçersiz telefon numarası formatı."));
                     }
 
-                    // Doğum tarihi varsa, gelecekte bir tarih olmadığını kontrol eder.
                     if (request.getDateOfBirth() != null) {
                         LocalDate birthDate = request.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                         if (birthDate.isAfter(LocalDate.now())) {
