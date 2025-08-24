@@ -51,11 +51,11 @@ public class UserController {
      * Kimliği doğrulanmış kullanıcının şifresini güncellemek için
      * kullanılan REST uç noktasıdır.
      * @param request Şifre güncelleme verilerini içeren istek gövdesi.
-     * @return Güncelleme başarılı olursa 200 OK HTTP durum kodu döndürür.
+     * @return Güncelleme başarılı olursa Mono<Boolean> içinde 'true' döndürür.
      */
     @PatchMapping("/me/password")
     @ResponseStatus(HttpStatus.OK)
-    public Mono<Void> changePassword(@RequestBody ChangePasswordRequest request) {
+    public Mono<Boolean> changePassword(@RequestBody ChangePasswordRequest request) {
         return userService.changePassword(request);
     }
 }

@@ -22,4 +22,6 @@ public class RegisterRequest {
     private String gender;
     private String token;
     private UserDepartment department;
+    private String company;
+    private String position;
 }

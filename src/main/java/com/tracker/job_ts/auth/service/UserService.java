@@ -35,18 +35,18 @@ public class UserService {
     /**
      * Kimliği doğrulanmış kullanıcının kendi profil bilgilerini günceller.
      * E-posta ve şifre gibi hassas bilgiler bu metod ile değiştirilemez.
+     *
      * @param dto Güncellenecek kullanıcı bilgilerini içeren RegisterRequest nesnesi.
      * @return Güncellenmiş kullanıcı verilerini içeren UserDto'ya dönüştürülmüş Mono nesnesi.
      */
     public Mono<UserDto> updateMe(RegisterRequest dto) {
-        // Gelen DTO'yu ValidationService ile doğrular.
-        return validationService.validate(dto)
-                // Kimliği doğrulanmış kullanıcının kendisini getirir.
+        return validationService.validateUpdate(dto)
+                // 1. Kimliği doğrulanmış kullanıcıyı getir
                 .then(authHelperService.getAuthUser())
-                // Kullanıcı nesnesi bulunduğunda, güncelleme işlemini gerçekleştirir.
+                // 2. Kullanıcı ID'si ile tekrar veritabanından çek (isteğe bağlı güvenlik/tutarlılık adımı)
+                .flatMap(authUser -> userRepository.findById(authUser.getId()))
+                // 3. Kullanıcı nesnesini bulduktan sonra güncelleme işlemini gerçekleştir
                 .flatMap(user -> {
-                    // Yalnızca güncellenebilecek alanları DTO'dan alıp User nesnesine set eder.
-                    // E-posta ve şifre güncellenmez.
                     if (dto.getUsername() != null) {
                         user.setUsername(dto.getUsername());
                     }
@@ -62,15 +62,14 @@ public class UserService {
                     if (dto.getDateOfBirth() != null) {
                         user.setDateOfBirth(dto.getDateOfBirth());
                     }
-                    if (dto.getGender() != null) {
-                        user.setGender(dto.getGender());
-                    }
-                    if (dto.getDepartment() != null) {
-                        user.setDepartment(dto.getDepartment());
-                    }
+                    user.setGender(dto.getGender());
+                    user.setPosition(dto.getPosition());
+                    user.setDepartment(dto.getDepartment());
+
 
                     user.setUpdatedAt(LocalDateTime.now());
 
+                    // 4. Güncellenmiş kullanıcıyı kaydet
                     return userRepository.save(user);
                 })
                 .map(UserDto::new);
@@ -79,32 +78,37 @@ public class UserService {
 
     /**
      * Kimliği doğrulanmış kullanıcının şifresini günceller.
+     *
      * @param request Şifre güncelleme verilerini içeren ChangePasswordRequest nesnesi.
-     * @return Başarılı olursa boş bir Mono<Void> döndürür, aksi halde hata fırlatır.
+     * @return Başarılı olursa Mono<Boolean> içinde 'true' döndürür, aksi halde hata fırlatır.
      */
-    public Mono<Void> changePassword(ChangePasswordRequest request) {
+    public Mono<Boolean> changePassword(ChangePasswordRequest request) {
         return Mono.just(request)
                 .flatMap(req -> {
-                    // Yeni şifre ve tekrarının eşleşip eşleşmediğini kontrol eder.
                     if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
                         return Mono.error(new IllegalArgumentException("Yeni şifreler eşleşmiyor."));
                     }
-                    // Diğer validasyon kuralları burada eklenebilir (örneğin, şifre uzunluğu).
                     return Mono.empty();
                 })
-                // Kimliği doğrulanmış kullanıcının kendisini getirir.
+                // 1. Kimliği doğrulanmış kullanıcıyı getir
                 .then(authHelperService.getAuthUser())
+                // 2. Kullanıcı ID'si ile tekrar veritabanından çek
+                .flatMap(authUser -> userRepository.findById(authUser.getId()))
+                // 3. Kullanıcı nesnesini bulduktan sonra şifre değiştirme işlemini yap
                 .flatMap(user -> {
-                    // Mevcut şifreyi doğrular.
                     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
                         return Mono.error(new IllegalArgumentException("Mevcut şifre yanlış."));
                     }
-                    // Yeni şifreyi hash'leyerek kullanıcı nesnesine set eder.
                     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
                     user.setUpdatedAt(LocalDateTime.now());
-                    // Güncellenmiş kullanıcıyı veritabanına kaydeder.
+
+                    // 4. Güncellenmiş kullanıcıyı kaydet
                     return userRepository.save(user);
                 })
-                .then(); // Sadece başarılı bir durumun sinyalini göndermek için
+                .map(user -> true)
+                .onErrorResume(e -> {
+                    log.error("Şifre değiştirme hatası: {}", e.getMessage());
+                    return Mono.error(e);
+                });
     }
 }

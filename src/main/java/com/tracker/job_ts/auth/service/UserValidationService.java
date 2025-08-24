@@ -32,25 +32,68 @@ public class UserValidationService {
         return Mono.just(dto)
                 .flatMap(request -> {
                     if (StringUtils.hasText(request.getEmail())) {
-                        return Mono.error(new ValidationException("E-posta adresi bu servis ile güncellenemez."));
+                        return Mono.error(new ValidationException("Email address cannot be updated with this service."));
                     }
 
                     if (StringUtils.hasText(request.getPassword())) {
-                        return Mono.error(new ValidationException("Şifre bu servis ile güncellenemez."));
+                        return Mono.error(new ValidationException("Password cannot be updated with this service."));
                     }
 
                     if (StringUtils.hasText(request.getPhone()) && !PHONE_PATTERN.matcher(request.getPhone()).matches()) {
-                        return Mono.error(new ValidationException("Geçersiz telefon numarası formatı."));
+                        return Mono.error(new ValidationException("Invalid phone number format."));
                     }
 
                     if (request.getDateOfBirth() != null) {
                         LocalDate birthDate = request.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
                         if (birthDate.isAfter(LocalDate.now())) {
-                            return Mono.error(new ValidationException("Doğum tarihi gelecekte olamaz."));
+                            return Mono.error(new ValidationException("The date of birth cannot be in the future."));
                         }
                     }
 
                     // Başarılı doğrulama durumunda, boş bir Mono döndürür.
+                    return Mono.empty();
+                });
+    }
+
+    /**
+     * Validates the fields of a RegisterRequest object for user profile updates.
+     * This method checks for valid data in fields other than email and password.
+     *
+     * @param dto The RegisterRequest object to validate.
+     * @return An empty Mono<Void> if validation is successful, otherwise throws a ValidationException.
+     */
+    public Mono<Void> validateUpdate(RegisterRequest dto) {
+        return Mono.just(dto)
+                .flatMap(request -> {
+                    // Username validation
+                    if (StringUtils.hasText(request.getUsername()) && request.getUsername().length() < 3) {
+                        return Mono.error(new ValidationException("Username must be at least 3 characters long."));
+                    }
+
+                    // Firstname validation
+                    if (StringUtils.hasText(request.getFirstname()) && request.getFirstname().length() < 2) {
+                        return Mono.error(new ValidationException("Firstname must be at least 2 characters long."));
+                    }
+
+                    // Lastname validation
+                    if (StringUtils.hasText(request.getLastname()) && request.getLastname().length() < 2) {
+                        return Mono.error(new ValidationException("Lastname must be at least 2 characters long."));
+                    }
+
+                    // Phone number validation
+                    if (StringUtils.hasText(request.getPhone()) && !PHONE_PATTERN.matcher(request.getPhone()).matches()) {
+                        return Mono.error(new ValidationException("Invalid phone number format."));
+                    }
+
+                    // Date of Birth validation
+                    if (request.getDateOfBirth() != null) {
+                        LocalDate birthDate = request.getDateOfBirth().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                        if (birthDate.isAfter(LocalDate.now())) {
+                            return Mono.error(new ValidationException("Date of birth cannot be in the future."));
+                        }
+                    }
+
+                    // If all checks pass, return an empty Mono
                     return Mono.empty();
                 });
     }
