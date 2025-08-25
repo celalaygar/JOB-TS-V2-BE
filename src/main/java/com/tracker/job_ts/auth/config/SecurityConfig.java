@@ -1,5 +1,6 @@
 package com.tracker.job_ts.auth.config;
 
+import com.tracker.job_ts.base.util.ApiPaths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +34,10 @@ public class SecurityConfig {
                                         Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.FORBIDDEN)))
                 )
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers(
+                                "/api/auth/**",
+                                ApiPaths.PUBLIC_PATH+"/**"
+                        ).permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
                         .pathMatchers("/api/deleted/**").hasAnyRole("DELETED", "ADMIN")

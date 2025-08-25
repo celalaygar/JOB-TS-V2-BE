@@ -2,16 +2,21 @@ package com.tracker.job_ts.base.util;
 
 public class ApiPaths {
     public static final String BASE_PATH_V2 = "/api/v2";
-    private static final String PROJECTS_PATH = "/projects";
-    private static final String BACKLOG_PATH = "/backlog";
-    private static final String KANBAN_PATH = "/kanban";
-    private static final String SPRINT_PATH = "/sprint";
-    private static final String SPRINT_TASK_PATH = "/sprint-task";
-    private static final String PROJECT_TASK_PATH = "/project-task";
-    private static final String SPRINT_USER_PATH = "/sprint-user";
-    private static final String TASK_COMMENT_PATH = "/project-task-comment";
-    private static final String EMAIL_CHANGE_PATH = "/email-change";
+    public static final String PUBLIC_PATH = BASE_PATH_V2 + "/public";
+    public static final String PROJECTS_PATH = "/projects";
+    public static final String BACKLOG_PATH = "/backlog";
+    public static final String KANBAN_PATH = "/kanban";
+    public static final String SPRINT_PATH = "/sprint";
+    public static final String SPRINT_TASK_PATH = "/sprint-task";
+    public static final String PROJECT_TASK_PATH = "/project-task";
+    public static final String SPRINT_USER_PATH = "/sprint-user";
+    public static final String TASK_COMMENT_PATH = "/project-task-comment";
+    public static final String EMAIL_CHANGE_PATH = "/email-change";
+    public static final String EMAIL_CHANGE_PUBLIC_PATH = "/email-change-public";
 
+    public static final class EmailChangePublicCtrl {
+        public static final String CTRL = PUBLIC_PATH+ EMAIL_CHANGE_PUBLIC_PATH;
+    }
     public static final class EmailChangeCtrl {
         public static final String CTRL = BASE_PATH_V2 + EMAIL_CHANGE_PATH;
     }

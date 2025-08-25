@@ -8,5 +8,6 @@ import lombok.Data;
 public class EmailChangeValidationResponse {
     private String token;
     private String newEmailPending;
-    private boolean valid;
+    private String currentEmail;
+    private Boolean valid;
 }

@@ -103,7 +103,7 @@ public class EmailChangeService {
 
                     return userRepository.save(user)
                             .flatMap(updatedUser -> {
-                                String verificationLink = frontendUrl + "/change-mail/token/" + changeToken;
+                                String verificationLink = frontendUrl + "/public/change-mail/token/" + changeToken;
                                 String subject = "Confirm Your New Email Address";
                                 String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n" +
                                         verificationLink + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
@@ -129,30 +129,39 @@ public class EmailChangeService {
                     boolean isValid = Duration.between(user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() < TOKEN_VALIDITY_MINUTES;
 
                     if (isValid) {
-                        return Mono.just(new EmailChangeValidationResponse(user.getEmailChangeToken(), user.getNewEmailPending(), true));
+                        return Mono.just(
+                                new EmailChangeValidationResponse(
+                                        user.getEmailChangeToken(),
+                                        user.getNewEmailPending(),
+                                        user.getEmail(),
+                                        true));
                     } else {
                         // If token is invalid/expired, we can clear the pending state
                         user.setNewEmailPending(null);
                         user.setEmailChangeToken(null);
                         user.setEmailChangeTokenSentAt(null);
                         return userRepository.save(user)
-                                .thenReturn(new EmailChangeValidationResponse(request.getToken(), null, false));
+                                .thenReturn(
+                                        new EmailChangeValidationResponse(
+                                                request.getToken(), null,null, false));
                     }
                 })
-                .switchIfEmpty(Mono.just(new EmailChangeValidationResponse(request.getToken(), null, false)));
+                .switchIfEmpty(Mono.just(
+                        new EmailChangeValidationResponse(
+                                request.getToken(), null, null,false)));
     }
 
     /**
-     * Finalizes the email change process.
+     * Finalizes the email change process by confirming it.
      * @param token The email change token.
-     * @return A Mono that completes when the email is updated.
+     * @return A Mono of EmailChangeResponse indicating the result.
      */
-    public Mono<Void> confirmEmailChange(String token) {
+    public Mono<EmailChangeResponse> confirmEmailChange(String token) {
         return userRepository.findByEmailChangeToken(token)
                 .flatMap(user -> {
                     if (user.getEmailChangeTokenSentAt() == null ||
                             Duration.between(user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() > TOKEN_VALIDITY_MINUTES) {
-                        return Mono.error(new IllegalArgumentException("The email change token has expired."));
+                        return Mono.just(new EmailChangeResponse(false, "The email change token has expired."));
                     }
 
                     // Final email update
@@ -161,9 +170,29 @@ public class EmailChangeService {
                     user.setEmailChangeToken(null);
                     user.setEmailChangeTokenSentAt(null);
 
-                    return userRepository.save(user).then();
+                    return userRepository.save(user)
+                            .thenReturn(new EmailChangeResponse(true, "Email has been successfully updated."));
                 })
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Invalid email change token.")));
+                .switchIfEmpty(Mono.just(new EmailChangeResponse(false, "Invalid email change token.")));
+    }
+
+    /**
+     * Rejects the email change request and clears the pending fields.
+     * @param token The email change token.
+     * @return A Mono of EmailChangeResponse indicating the result.
+     */
+    public Mono<EmailChangeResponse> rejectEmailChange(String token) {
+        return userRepository.findByEmailChangeToken(token)
+                .flatMap(user -> {
+                    // Clear pending email change fields
+                    user.setNewEmailPending(null);
+                    user.setEmailChangeToken(null);
+                    user.setEmailChangeTokenSentAt(null);
+
+                    return userRepository.save(user)
+                            .thenReturn(new EmailChangeResponse(true, "Email change request has been rejected."));
+                })
+                .switchIfEmpty(Mono.just(new EmailChangeResponse(false, "Invalid email change token.")));
     }
 
     /**
