@@ -62,7 +62,8 @@ public class EmailChangeService {
                     return userRepository.save(user)
                             .flatMap(updatedUser -> {
                                 String subject = "Your Email Change Verification Code";
-                                String content = "Hello,\n\nYour verification code for email change is: " + code +
+                                String content = "Hello,\n\nYour verification code for email change is:"+
+                                        " \n\n <b>CODE :           " + code + " </b>"+
                                         "\n\nThis code is valid for a short time. Do not share it with anyone.\n\nRegards,\nYour App Team";
 
                                 return emailService.sendCustomEmail(updatedUser.getEmail(), subject, content)
@@ -207,6 +208,7 @@ public class EmailChangeService {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
+            sb.append(" ");
         }
         return sb.toString().toUpperCase();
     }
