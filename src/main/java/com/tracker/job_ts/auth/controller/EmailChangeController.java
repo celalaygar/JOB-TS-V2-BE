@@ -4,13 +4,14 @@ import com.tracker.job_ts.auth.dto.EmailChangeRequest;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationRequest;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationResponse;
 import com.tracker.job_ts.auth.service.EmailChangeService;
+import com.tracker.job_ts.base.util.ApiPaths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/email-change")
+@RequestMapping(ApiPaths.EmailChangeCtrl.CTRL)
 @RequiredArgsConstructor
 public class EmailChangeController {
 
@@ -22,18 +23,17 @@ public class EmailChangeController {
      * @param username The username of the user.
      * @return A Mono of ResponseEntity indicating the status of the operation.
      */
-    @PostMapping("/send-code")
-    public Mono<ResponseEntity<String>> sendChangeCode() {
+    @GetMapping("/send-code")
+    public Mono<ResponseEntity<Boolean>> sendChangeCode() {
         return emailChangeService.sendChangeCode()
-                .map(aVoid -> ResponseEntity.ok("Verification code sent successfully. Check your email."))
+                .map(success -> ResponseEntity.ok(success)) // true dönüyor
                 .onErrorResume(e -> {
-                    // Handle specific exceptions and return appropriate HTTP status codes
                     if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.badRequest().body(e.getMessage()));
+                        return Mono.just(ResponseEntity.badRequest().body(false));
                     } else if (e instanceof IllegalStateException) {
-                        return Mono.just(ResponseEntity.status(429).body(e.getMessage())); // 429 Too Many Requests
+                        return Mono.just(ResponseEntity.status(429).body(false)); // Too Many Requests
                     } else {
-                        return Mono.just(ResponseEntity.internalServerError().body("An error occurred: " + e.getMessage()));
+                        return Mono.just(ResponseEntity.internalServerError().body(false));
                     }
                 });
     }

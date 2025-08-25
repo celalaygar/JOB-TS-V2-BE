@@ -40,9 +40,9 @@ public class EmailChangeService {
      * Sends an 8-character alphanumeric code to the user's email.
      * Enforces a 60-second cooldown between consecutive requests.
      *
-     * @return A Mono that completes successfully or with an error.
+     * @return A Mono<Boolean> -> true if sent successfully, error otherwise
      */
-    public Mono<String> sendChangeCode() {
+    public Mono<Boolean> sendChangeCode() {
         return authHelperService.getAuthUser()
                 .flatMap(user -> {
                     // Check for cooldown using the timestamp in the user document
@@ -65,10 +65,12 @@ public class EmailChangeService {
                             .flatMap(updatedUser -> {
                                 // Send the email with the generated code
                                 String subject = "Your Email Change Verification Code";
-                                String content = "Hello,\n\nYour verification code for email change is: " + code + "\n\nThis code is valid for a short time. Do not share it with anyone.\n\nRegards,\nYour App Team";
+                                String content = "Hello,\n\nYour verification code for email change is: " + code +
+                                        "\n\nThis code is valid for a short time. Do not share it with anyone." +
+                                        "\n\nRegards,\nYour App Team";
 
                                 return emailService.sendCustomEmail(updatedUser.getEmail(), subject, content)
-                                        .thenReturn("Verification code sent successfully. Check your email.");
+                                        .thenReturn(true); // ✅ Başarılı olursa true döner
                             });
                 });
     }
@@ -181,6 +183,6 @@ public class EmailChangeService {
         for (int i = 0; i < length; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
-        return sb.toString();
+        return sb.toString().toUpperCase();
     }
 }

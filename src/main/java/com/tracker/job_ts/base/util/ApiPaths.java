@@ -10,6 +10,11 @@ public class ApiPaths {
     private static final String PROJECT_TASK_PATH = "/project-task";
     private static final String SPRINT_USER_PATH = "/sprint-user";
     private static final String TASK_COMMENT_PATH = "/project-task-comment";
+    private static final String EMAIL_CHANGE_PATH = "/email-change";
+
+    public static final class EmailChangeCtrl {
+        public static final String CTRL = BASE_PATH_V2 + EMAIL_CHANGE_PATH;
+    }
 
     public static final class ProjectsCtrl {
         public static final String CTRL = BASE_PATH_V2 + PROJECTS_PATH;
