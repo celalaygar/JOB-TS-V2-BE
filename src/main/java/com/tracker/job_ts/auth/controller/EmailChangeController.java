@@ -44,20 +44,19 @@ public class EmailChangeController {
      * @return A Mono of ResponseEntity indicating the status of the operation.
      */
     @PostMapping("/verify-and-send-link")
-    public Mono<ResponseEntity<String>> verifyAndSendLink(@RequestBody EmailChangeRequest request) {
+    public Mono<ResponseEntity<Boolean>> verifyAndSendLink(@RequestBody EmailChangeRequest request) {
         return emailChangeService.verifyAndGenerateChangeLink(request)
-                .then(Mono.just(ResponseEntity.ok("Verification link sent to your new email address.")))
+                .map(success -> ResponseEntity.ok(true)) // ✅ başarılı olursa true
                 .onErrorResume(e -> {
                     if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.badRequest().body(e.getMessage()));
+                        return Mono.just(ResponseEntity.badRequest().body(false));
                     } else if (e instanceof IllegalStateException) {
-                        return Mono.just(ResponseEntity.status(429).body(e.getMessage()));
+                        return Mono.just(ResponseEntity.status(429).body(false)); // Too Many Requests
                     } else {
-                        return Mono.just(ResponseEntity.internalServerError().body("An error occurred: " + e.getMessage()));
+                        return Mono.just(ResponseEntity.internalServerError().body(false));
                     }
                 });
     }
-
 
     /**
      * Token'ı doğrular ve e-posta değişikliği için gerekli bilgileri döndürür.

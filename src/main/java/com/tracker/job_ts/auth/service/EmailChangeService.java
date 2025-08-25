@@ -82,7 +82,7 @@ public class EmailChangeService {
      * @param request Contains the current password, new email, and the verification code.
      * @return A Mono that completes successfully or with an error.
      */
-    public Mono<Void> verifyAndGenerateChangeLink(EmailChangeRequest request) {
+    public Mono<Boolean> verifyAndGenerateChangeLink(EmailChangeRequest request) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> {
                     // 1. Verify current password
@@ -113,11 +113,16 @@ public class EmailChangeService {
 
                                 // 5. Send the email to the new address with the verification link
                                 String subject = "Confirm Your New Email Address";
-                                String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n" + verificationLink + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
-                                return emailService.sendCustomEmail(updatedUser.getNewEmailPending(), subject, content);
+                                String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n"
+                                        + verificationLink
+                                        + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
+
+                                return emailService.sendCustomEmail(updatedUser.getNewEmailPending(), subject, content)
+                                        .thenReturn(true); // ✅ başarı durumunda true dönüyor
                             });
                 });
     }
+
 
     /**
      * Validates the provided email change token and returns the email change details.
