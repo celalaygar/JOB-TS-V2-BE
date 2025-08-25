@@ -1,6 +1,7 @@
 package com.tracker.job_ts.auth.controller;
 
 import com.tracker.job_ts.auth.dto.EmailChangeRequest;
+import com.tracker.job_ts.auth.dto.EmailChangeResponse;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationRequest;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationResponse;
 import com.tracker.job_ts.auth.service.EmailChangeService;
@@ -24,19 +25,20 @@ public class EmailChangeController {
      * @return A Mono of ResponseEntity indicating the status of the operation.
      */
     @GetMapping("/send-code")
-    public Mono<ResponseEntity<Boolean>> sendChangeCode() {
+    public Mono<ResponseEntity<EmailChangeResponse>> sendChangeCode() {
         return emailChangeService.sendChangeCode()
-                .map(success -> ResponseEntity.ok(success)) // true dönüyor
+                .map(response -> ResponseEntity.ok(response))
                 .onErrorResume(e -> {
                     if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.badRequest().body(false));
+                        return Mono.just(ResponseEntity.badRequest().body(new EmailChangeResponse(false, e.getMessage())));
                     } else if (e instanceof IllegalStateException) {
-                        return Mono.just(ResponseEntity.status(429).body(false)); // Too Many Requests
+                        return Mono.just(ResponseEntity.status(429).body(new EmailChangeResponse(false, e.getMessage())));
                     } else {
-                        return Mono.just(ResponseEntity.internalServerError().body(false));
+                        return Mono.just(ResponseEntity.internalServerError().body(new EmailChangeResponse(false, "An error occurred: " + e.getMessage())));
                     }
                 });
     }
+
     /**
      * Endpoint to verify password and code, and send a confirmation link to the new email address.
      *
@@ -44,19 +46,20 @@ public class EmailChangeController {
      * @return A Mono of ResponseEntity indicating the status of the operation.
      */
     @PostMapping("/verify-and-send-link")
-    public Mono<ResponseEntity<Boolean>> verifyAndSendLink(@RequestBody EmailChangeRequest request) {
+    public Mono<ResponseEntity<EmailChangeResponse>> verifyAndSendLink(@RequestBody EmailChangeRequest request) {
         return emailChangeService.verifyAndGenerateChangeLink(request)
-                .map(success -> ResponseEntity.ok(true)) // ✅ başarılı olursa true
+                .map(response -> ResponseEntity.ok(response))
                 .onErrorResume(e -> {
                     if (e instanceof IllegalArgumentException) {
-                        return Mono.just(ResponseEntity.badRequest().body(false));
+                        return Mono.just(ResponseEntity.badRequest().body(new EmailChangeResponse(false, e.getMessage())));
                     } else if (e instanceof IllegalStateException) {
-                        return Mono.just(ResponseEntity.status(429).body(false)); // Too Many Requests
+                        return Mono.just(ResponseEntity.status(429).body(new EmailChangeResponse(false, e.getMessage())));
                     } else {
-                        return Mono.just(ResponseEntity.internalServerError().body(false));
+                        return Mono.just(ResponseEntity.internalServerError().body(new EmailChangeResponse(false, "An error occurred: " + e.getMessage())));
                     }
                 });
     }
+
 
     /**
      * Token'ı doğrular ve e-posta değişikliği için gerekli bilgileri döndürür.

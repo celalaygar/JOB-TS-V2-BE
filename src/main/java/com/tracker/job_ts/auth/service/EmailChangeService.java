@@ -3,6 +3,7 @@ package com.tracker.job_ts.auth.service;
 
 import com.tracker.job_ts.auth.config.JWTProvider;
 import com.tracker.job_ts.auth.dto.EmailChangeRequest;
+import com.tracker.job_ts.auth.dto.EmailChangeResponse;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationRequest;
 import com.tracker.job_ts.auth.dto.EmailChangeValidationResponse;
 import com.tracker.job_ts.auth.entity.User;
@@ -40,40 +41,37 @@ public class EmailChangeService {
      * Sends an 8-character alphanumeric code to the user's email.
      * Enforces a 60-second cooldown between consecutive requests.
      *
-     * @return A Mono<Boolean> -> true if sent successfully, error otherwise
+     * @return A Mono that completes successfully or with an error.
      */
-    public Mono<Boolean> sendChangeCode() {
+    public Mono<EmailChangeResponse> sendChangeCode() {
         return authHelperService.getAuthUser()
                 .flatMap(user -> {
-                    // Check for cooldown using the timestamp in the user document
                     if (user.getEmailVerificationCodeSentAt() != null) {
                         Duration timeElapsed = Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now());
                         if (timeElapsed.getSeconds() < COOLDOWN_SECONDS) {
-                            return Mono.error(new IllegalStateException("Please wait at least " + COOLDOWN_SECONDS + " seconds before requesting a new code."));
+                            return Mono.just(new EmailChangeResponse(false,
+                                    "Please wait at least " + COOLDOWN_SECONDS + " seconds before requesting a new code."));
                         }
                     }
 
-                    // Generate the 8-character code
                     String code = generateAlphanumericCode(8);
 
-                    // Update the user document with the new code and timestamp
                     user.setEmailVerificationCode(code);
                     user.setEmailVerificationCodeSentAt(LocalDateTime.now());
 
-                    // Save the user entity to the database
                     return userRepository.save(user)
                             .flatMap(updatedUser -> {
-                                // Send the email with the generated code
                                 String subject = "Your Email Change Verification Code";
                                 String content = "Hello,\n\nYour verification code for email change is: " + code +
-                                        "\n\nThis code is valid for a short time. Do not share it with anyone." +
-                                        "\n\nRegards,\nYour App Team";
+                                        "\n\nThis code is valid for a short time. Do not share it with anyone.\n\nRegards,\nYour App Team";
 
                                 return emailService.sendCustomEmail(updatedUser.getEmail(), subject, content)
-                                        .thenReturn(true); // ✅ Başarılı olursa true döner
+                                        .thenReturn(new EmailChangeResponse(true,
+                                                "Verification code sent successfully. Check your email."));
                             });
                 });
     }
+
 
     /**
      * Verifies the provided code and password, then saves the new email and token to the user document
@@ -82,24 +80,21 @@ public class EmailChangeService {
      * @param request Contains the current password, new email, and the verification code.
      * @return A Mono that completes successfully or with an error.
      */
-    public Mono<Boolean> verifyAndGenerateChangeLink(EmailChangeRequest request) {
+    public Mono<EmailChangeResponse> verifyAndGenerateChangeLink(EmailChangeRequest request) {
         return authHelperService.getAuthUser()
                 .flatMap(user -> {
-                    // 1. Verify current password
                     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-                        return Mono.error(new IllegalArgumentException("Invalid password."));
+                        return Mono.just(new EmailChangeResponse(false, "Invalid password."));
                     }
 
-                    // 2. Verify the provided code and check its validity period
                     if (user.getEmailVerificationCode() == null || !user.getEmailVerificationCode().equals(request.getVerificationCode())) {
-                        return Mono.error(new IllegalArgumentException("Invalid verification code."));
+                        return Mono.just(new EmailChangeResponse(false, "Invalid verification code."));
                     }
                     if (user.getEmailVerificationCodeSentAt() == null ||
                             Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now()).toMinutes() > CODE_VALIDITY_MINUTES) {
-                        return Mono.error(new IllegalArgumentException("The verification code has expired. Please request a new one."));
+                        return Mono.just(new EmailChangeResponse(false, "The verification code has expired. Please request a new one."));
                     }
 
-                    // 3. Generate a token for the new email address and save to user document
                     String changeToken = jwtProvider.generateEmailChangeToken(user.getId(), request.getNewEmail());
 
                     user.setNewEmailPending(request.getNewEmail());
@@ -108,17 +103,13 @@ public class EmailChangeService {
 
                     return userRepository.save(user)
                             .flatMap(updatedUser -> {
-                                // 4. Construct the full verification link
                                 String verificationLink = frontendUrl + "/change-mail/token/" + changeToken;
-
-                                // 5. Send the email to the new address with the verification link
                                 String subject = "Confirm Your New Email Address";
-                                String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n"
-                                        + verificationLink
-                                        + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
+                                String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n" +
+                                        verificationLink + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
 
                                 return emailService.sendCustomEmail(updatedUser.getNewEmailPending(), subject, content)
-                                        .thenReturn(true); // ✅ başarı durumunda true dönüyor
+                                        .thenReturn(new EmailChangeResponse(true, "Verification link sent to your new email address."));
                             });
                 });
     }
