@@ -50,7 +50,7 @@ public class EmailChangePublicController {
      * @param request İstek gövdesinde token'ı içerir.
      * @return Token'ın geçerliliğine dair bir yanıt nesnesi.
      */
-    @GetMapping("/validate-token")
+    @PostMapping("/validate-token")
     public Mono<ResponseEntity<EmailChangeValidationResponse>> validateToken(@RequestBody EmailChangeValidationRequest request) {
         return emailChangeService.validateToken(request)
                 .map(response -> ResponseEntity.ok(response))

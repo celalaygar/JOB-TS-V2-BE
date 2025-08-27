@@ -12,7 +12,7 @@ public class ApiPaths {
     public static final String SPRINT_USER_PATH = "/sprint-user";
     public static final String TASK_COMMENT_PATH = "/project-task-comment";
     public static final String EMAIL_CHANGE_PATH = "/email-change";
-    public static final String EMAIL_CHANGE_PUBLIC_PATH = "/email-change-public";
+    public static final String EMAIL_CHANGE_PUBLIC_PATH = "/email-change";
 
     public static final class EmailChangePublicCtrl {
         public static final String CTRL = PUBLIC_PATH+ EMAIL_CHANGE_PUBLIC_PATH;

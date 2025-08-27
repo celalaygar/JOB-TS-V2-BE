@@ -55,7 +55,6 @@ public class EmailChangeService {
                     }
 
                     String code = generateAlphanumericCode(8);
-
                     user.setEmailVerificationCode(code);
                     user.setEmailVerificationCodeSentAt(LocalDateTime.now());
 
@@ -63,7 +62,7 @@ public class EmailChangeService {
                             .flatMap(updatedUser -> {
                                 String subject = "Your Email Change Verification Code";
                                 String content = "Hello,\n\nYour verification code for email change is:"+
-                                        " \n\n <b>CODE :           " + code + " </b>"+
+                                        " \n\n CODE :           " + code +
                                         "\n\nThis code is valid for a short time. Do not share it with anyone.\n\nRegards,\nYour App Team";
 
                                 return emailService.sendCustomEmail(updatedUser.getEmail(), subject, content)
@@ -127,7 +126,8 @@ public class EmailChangeService {
         return userRepository.findByEmailChangeToken(request.getToken())
                 .flatMap(user -> {
                     // Check if token is expired
-                    boolean isValid = Duration.between(user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() < TOKEN_VALIDITY_MINUTES;
+                    boolean isValid = Duration.between(
+                            user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() < TOKEN_VALIDITY_MINUTES;
 
                     if (isValid) {
                         return Mono.just(
@@ -203,12 +203,11 @@ public class EmailChangeService {
      * @return The generated code string.
      */
     private String generateAlphanumericCode(int length) {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZO123456789";
         Random random = new Random();
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
-            sb.append(" ");
         }
         return sb.toString().toUpperCase();
     }

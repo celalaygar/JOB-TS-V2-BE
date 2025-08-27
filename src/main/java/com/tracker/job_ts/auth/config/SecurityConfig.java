@@ -36,7 +36,8 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
                                 "/api/auth/**",
-                                ApiPaths.PUBLIC_PATH+"/**"
+                                ApiPaths.PUBLIC_PATH+"/**",
+                                ApiPaths.EmailChangePublicCtrl.CTRL+"/**"
                         ).permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
