@@ -37,7 +37,8 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/api/auth/**",
                                 ApiPaths.PUBLIC_PATH+"/**",
-                                ApiPaths.EmailChangePublicCtrl.CTRL+"/**"
+                                ApiPaths.EmailChangePublicCtrl.CTRL+"/**",
+                                ApiPaths.PasswordResetPublicCtrl.CTRL+"/**"
                         ).permitAll()
                         .pathMatchers("/api/admin/**").hasRole("ADMIN")
                         .pathMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
