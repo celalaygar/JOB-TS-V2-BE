@@ -52,7 +52,14 @@ jwt:
   secret: "QWx3YXlzLXNlY3VyZS1hbmQtc3Ryb25nLWtleS1mb3Itam90LTUxMi1zZWN1cml0eS0xMjM0NTY3ODkwMTIzNDU2Nzg5"
   invitation-secret: "QWx3YXlzLXNlY3VyZS1hbmQtc3Ryb25nLWtleS1mb3Itam90LTUxMi1zZWN1cml0eS0xMjM0NTY3ODkwMTIzNDU2Nzg4"
   email-change-secret: "QWx3YXlzLXNlY3VyZS1hbmQtc3Ryb25nLWtleS1mb3Itam90LTUxMi1zZWN1cml0eS0xMjM0NTY3ODkwMTIzNDU2Nzg3"
-  expiredDay: 1286400000
+  expiredDay: 86400000
+  email-change-expiredDay: 900000
+  invitation-expiredDay: 900000
 
 frontend:
   url: "http://localhost:5173/"
+
+email-change:
+  cooldown-seconds: 60
+  code-validity-minutes: 10
+  token-validity-minutes: 15

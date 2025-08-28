@@ -41,6 +41,13 @@ jwt:
   invitation-secret: ${INVITATION_SECRET}
   email-change-secret: ${EMAIL_CHANGE_SECRET}
   expiredDay: ${JWT_EXPIRED_DAY}
+  email-change-expiredDay: ${EMAIL_CHANGE_EXPIRED_DAY}
+  invitation-expiredDay: ${INVITATION_DAY}
 
 frontend:
   url: ${FRONTEND_URL}
+
+email-change:
+  cooldown-seconds: 60
+  code-validity-minutes: 10
+  token-validity-minutes: 15

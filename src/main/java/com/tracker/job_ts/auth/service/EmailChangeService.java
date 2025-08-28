@@ -1,6 +1,7 @@
 package com.tracker.job_ts.auth.service;
 
 
+import com.tracker.job_ts.auth.config.EmailChangeProperties;
 import com.tracker.job_ts.auth.config.JWTProvider;
 import com.tracker.job_ts.auth.dto.EmailChangeRequest;
 import com.tracker.job_ts.auth.dto.EmailChangeResponse;
@@ -28,10 +29,7 @@ public class EmailChangeService {
     private final AuthHelperService authHelperService;
     private final PasswordEncoder passwordEncoder;
     private final JWTProvider jwtProvider;
-
-    private static final long COOLDOWN_SECONDS = 60;
-    private static final long CODE_VALIDITY_MINUTES = 10;
-    private static final long TOKEN_VALIDITY_MINUTES = 15;
+    private final EmailChangeProperties emailChangeProperties;
 
 
     @Value("${frontend.url}")
@@ -48,9 +46,9 @@ public class EmailChangeService {
                 .flatMap(user -> {
                     if (user.getEmailVerificationCodeSentAt() != null) {
                         Duration timeElapsed = Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now());
-                        if (timeElapsed.getSeconds() < COOLDOWN_SECONDS) {
+                        if (timeElapsed.getSeconds() < emailChangeProperties.getCooldownSeconds()) {
                             return Mono.just(new EmailChangeResponse(false,
-                                    "Please wait at least " + COOLDOWN_SECONDS + " seconds before requesting a new code."));
+                                    "Please wait at least " + emailChangeProperties.getCooldownSeconds() + " seconds before requesting a new code."));
                         }
                     }
 
@@ -93,7 +91,7 @@ public class EmailChangeService {
                     }
 
                     if (user.getEmailVerificationCodeSentAt() == null ||
-                            Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now()).toMinutes() > CODE_VALIDITY_MINUTES) {
+                            Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now()).toMinutes() > emailChangeProperties.getCodeValidityMinutes()) {
                         return Mono.just(new EmailChangeResponse(false, "The verification code has expired. Please request a new one."));
                     }
 
@@ -142,7 +140,7 @@ public class EmailChangeService {
                 .flatMap(user -> {
                     // Check if token is expired
                     boolean isValid = Duration.between(
-                            user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() < TOKEN_VALIDITY_MINUTES;
+                            user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() < emailChangeProperties.getTokenValidityMinutes();
 
                     if (isValid) {
                         return Mono.just(
@@ -176,7 +174,7 @@ public class EmailChangeService {
         return userRepository.findByEmailChangeToken(token)
                 .flatMap(user -> {
                     if (user.getEmailChangeTokenSentAt() == null ||
-                            Duration.between(user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() > TOKEN_VALIDITY_MINUTES) {
+                            Duration.between(user.getEmailChangeTokenSentAt(), LocalDateTime.now()).toMinutes() > emailChangeProperties.getTokenValidityMinutes()) {
                         return Mono.just(new EmailChangeResponse(false, "The email change token has expired."));
                     }
 

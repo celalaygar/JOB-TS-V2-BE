@@ -32,6 +32,13 @@ public class JWTProvider {
 
     @Value("${jwt.expiredDay}")
     private Long expiredDay ;
+
+    @Value("${jwt.email-change-expiredDay}")
+    private Long emailExpiredDay;
+
+    @Value("${jwt.invitation-expiredDay}")
+    private Long invitationExpiredDay;
+
     private SecretKey SECRET_KEY ;
     private SecretKey INVITATION_SECRET_KEY ;
     private SecretKey EMAIL_CHANGE_SECRET_KEY;
@@ -138,7 +145,7 @@ public class JWTProvider {
                 .setSubject(email)
                 .claim("projectId", projectId)
                 .setIssuedAt(now)
-                .setExpiration(expiryDate)
+                .setExpiration((new Date(System.currentTimeMillis() + invitationExpiredDay))) // 15 dk
                 .signWith(SignatureAlgorithm.HS512, INVITATION_SECRET_KEY) // farklı key
                 .compact();
     }
@@ -177,7 +184,7 @@ public class JWTProvider {
                 .setSubject(userId)
                 .claim("newEmail", newEmail)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000)) // 15 minutes expiration
+                .setExpiration((new Date(System.currentTimeMillis() + emailExpiredDay))) // 15 dk
                 .signWith(SignatureAlgorithm.HS512, EMAIL_CHANGE_SECRET_KEY)
                 .compact();
     }
