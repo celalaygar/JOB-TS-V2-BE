@@ -87,32 +87,47 @@ public class EmailChangeService {
                         return Mono.just(new EmailChangeResponse(false, "Invalid password."));
                     }
 
-                    if (user.getEmailVerificationCode() == null || !user.getEmailVerificationCode().equals(request.getVerificationCode())) {
+                    if (user.getEmailVerificationCode() == null ||
+                            !user.getEmailVerificationCode().equals(request.getVerificationCode())) {
                         return Mono.just(new EmailChangeResponse(false, "Invalid verification code."));
                     }
+
                     if (user.getEmailVerificationCodeSentAt() == null ||
                             Duration.between(user.getEmailVerificationCodeSentAt(), LocalDateTime.now()).toMinutes() > CODE_VALIDITY_MINUTES) {
                         return Mono.just(new EmailChangeResponse(false, "The verification code has expired. Please request a new one."));
                     }
 
-                    String changeToken = jwtProvider.generateEmailChangeToken(user.getId(), request.getNewEmail());
+                    // ✅ New email başka bir kullanıcıya ait mi kontrol et
+                    return userRepository.findByEmail(request.getNewEmail())
+                            .flatMap(existingUser -> {
+                                // Eğer başka user bu emaili kullanıyorsa hata dön
+                                if (!existingUser.getId().equals(user.getId())) {
+                                    return Mono.just(new EmailChangeResponse(false, "This email is already in use."));
+                                }
+                                return Mono.empty(); // aynı kullanıcıysa akışa devam etsin
+                            })
+                            .switchIfEmpty(Mono.defer(() -> {
+                                // ✅ Email başka kullanıcıya ait değil, token üret
+                                String changeToken = jwtProvider.generateEmailChangeToken(user.getId(), request.getNewEmail());
 
-                    user.setNewEmailPending(request.getNewEmail());
-                    user.setEmailChangeToken(changeToken);
-                    user.setEmailChangeTokenSentAt(LocalDateTime.now());
+                                user.setNewEmailPending(request.getNewEmail());
+                                user.setEmailChangeToken(changeToken);
+                                user.setEmailChangeTokenSentAt(LocalDateTime.now());
 
-                    return userRepository.save(user)
-                            .flatMap(updatedUser -> {
-                                String verificationLink = frontendUrl + "/public/change-mail/token/" + changeToken;
-                                String subject = "Confirm Your New Email Address";
-                                String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n" +
-                                        verificationLink + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
+                                return userRepository.save(user)
+                                        .flatMap(updatedUser -> {
+                                            String verificationLink = frontendUrl + "/public/change-mail/token/" + changeToken;
+                                            String subject = "Confirm Your New Email Address";
+                                            String content = "Hello,\n\nTo complete the email change process, please click the link below:\n\n" +
+                                                    verificationLink + "\n\nThis link is valid for a short time.\n\nRegards,\nYour App Team";
 
-                                return emailService.sendCustomEmail(updatedUser.getNewEmailPending(), subject, content)
-                                        .thenReturn(new EmailChangeResponse(true, "Verification link sent to your new email address."));
-                            });
+                                            return emailService.sendCustomEmail(updatedUser.getNewEmailPending(), subject, content)
+                                                    .thenReturn(new EmailChangeResponse(true, "Verification link sent to your new email address."));
+                                        });
+                            }));
                 });
     }
+
 
 
     /**

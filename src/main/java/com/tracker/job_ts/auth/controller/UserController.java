@@ -2,6 +2,7 @@ package com.tracker.job_ts.auth.controller;
 
 
 import com.tracker.job_ts.auth.dto.ChangePasswordRequest;
+import com.tracker.job_ts.auth.dto.ChangePasswordResponse;
 import com.tracker.job_ts.auth.dto.RegisterRequest;
 import com.tracker.job_ts.auth.dto.UserDto;
 import com.tracker.job_ts.auth.entity.SystemRole;
@@ -55,7 +56,7 @@ public class UserController {
      */
     @PatchMapping("/me/password")
     @ResponseStatus(HttpStatus.OK)
-    public Mono<Boolean> changePassword(@RequestBody ChangePasswordRequest request) {
+    public Mono<ChangePasswordResponse> changePassword(@RequestBody ChangePasswordRequest request) {
         return userService.changePassword(request);
     }
 }
