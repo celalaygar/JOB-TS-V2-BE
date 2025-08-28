@@ -38,11 +38,13 @@ springdoc:
 
 jwt:
   secret: ${JWT_SECRET}
-  invitation-secret: ${INVITATION_SECRET}
-  email-change-secret: ${EMAIL_CHANGE_SECRET}
   expiredDay: ${JWT_EXPIRED_DAY}
-  email-change-expiredDay: ${EMAIL_CHANGE_EXPIRED_DAY}
+  invitation-secret: ${INVITATION_SECRET}
   invitation-expiredDay: ${INVITATION_DAY}
+  email-change-secret: ${EMAIL_CHANGE_SECRET}
+  email-change-expiredDay: ${EMAIL_CHANGE_EXPIRED_DAY}
+  password-reset-secret: ${PASSWORD_RESET_SECRET}
+  password-reset-expiredDay: ${PASSWORD_RESET_EXPIRED_DAY}
 
 frontend:
   url: ${FRONTEND_URL}
@@ -50,4 +52,8 @@ frontend:
 email-change:
   cooldown-seconds: 60
   code-validity-minutes: 10
+  token-validity-minutes: 15
+
+password-reset:
+  cooldown-seconds: 120
   token-validity-minutes: 15

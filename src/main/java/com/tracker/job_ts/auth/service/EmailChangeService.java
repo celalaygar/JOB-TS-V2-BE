@@ -1,13 +1,12 @@
 package com.tracker.job_ts.auth.service;
 
 
-import com.tracker.job_ts.auth.config.EmailChangeProperties;
+import com.tracker.job_ts.auth.config.properties.EmailChangeProperties;
 import com.tracker.job_ts.auth.config.JWTProvider;
-import com.tracker.job_ts.auth.dto.EmailChangeRequest;
-import com.tracker.job_ts.auth.dto.EmailChangeResponse;
-import com.tracker.job_ts.auth.dto.EmailChangeValidationRequest;
-import com.tracker.job_ts.auth.dto.EmailChangeValidationResponse;
-import com.tracker.job_ts.auth.entity.User;
+import com.tracker.job_ts.auth.dto.emailChange.EmailChangeRequest;
+import com.tracker.job_ts.auth.dto.emailChange.EmailChangeResponse;
+import com.tracker.job_ts.auth.dto.emailChange.EmailChangeValidationRequest;
+import com.tracker.job_ts.auth.dto.emailChange.EmailChangeValidationResponse;
 import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.email.service.EmailService;
 import lombok.RequiredArgsConstructor;

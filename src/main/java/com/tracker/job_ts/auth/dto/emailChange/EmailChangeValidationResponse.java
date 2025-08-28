@@ -1,4 +1,4 @@
-package com.tracker.job_ts.auth.dto;
+package com.tracker.job_ts.auth.dto.emailChange;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

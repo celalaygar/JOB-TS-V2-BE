@@ -29,6 +29,8 @@ public class JWTProvider {
     private String INVITATION_SECRET ;
     @Value("${jwt.email-change-secret}")
     private String EMAIL_CHANGE_SECRET ;
+    @Value("${jwt.password-reset-secret}")
+    private String PASSWORD_RESET_SECRET ;
 
     @Value("${jwt.expiredDay}")
     private Long expiredDay ;
@@ -39,15 +41,20 @@ public class JWTProvider {
     @Value("${jwt.invitation-expiredDay}")
     private Long invitationExpiredDay;
 
+    @Value("${jwt.password-reset-expiredDay}")
+    private Long passwordResetExpiredDay;
+
     private SecretKey SECRET_KEY ;
     private SecretKey INVITATION_SECRET_KEY ;
     private SecretKey EMAIL_CHANGE_SECRET_KEY;
+    private SecretKey PASSWORD_RESET_SECRET_KEY;
 
     @PostConstruct
     public void init() {
         SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
         INVITATION_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(INVITATION_SECRET));
         EMAIL_CHANGE_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(EMAIL_CHANGE_SECRET));
+        PASSWORD_RESET_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(EMAIL_CHANGE_SECRET));
     }
 
     public String generateToken(String email, List<SystemRole> roles) {
@@ -210,5 +217,36 @@ public class JWTProvider {
         } catch (Exception e) {
             throw new UnauthorizedException("An error occurred during token validation.");
         }
+    }
+
+
+
+
+
+    public String generateResetPasswordToken(String userId) {
+        return Jwts.builder()
+                .setSubject(userId)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + passwordResetExpiredDay)) // örn. 15 dk
+                .signWith(SignatureAlgorithm.HS512, PASSWORD_RESET_SECRET_KEY)
+                .compact();
+    }
+
+    public boolean validateResetPasswordToken(String token) {
+        try {
+            Jwts.parser().setSigningKey(PASSWORD_RESET_SECRET_KEY).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    public String getUserIdFromResetPasswordToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(PASSWORD_RESET_SECRET_KEY)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
     }
 }

@@ -42,9 +42,12 @@ public class User {
     // New fields for email verification code
     private String emailVerificationCode;
     private LocalDateTime emailVerificationCodeSentAt;
-
-    // Yeni alanlar
+    // email change Yeni alanlar
     private String newEmailPending;
     private String emailChangeToken;
     private LocalDateTime emailChangeTokenSentAt;
+
+    // Reset password için yeni alanlar
+    private String resetPasswordToken;
+    private LocalDateTime resetPasswordTokenSentAt;
 }

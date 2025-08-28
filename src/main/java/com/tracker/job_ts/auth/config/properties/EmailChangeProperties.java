@@ -1,4 +1,4 @@
-package com.tracker.job_ts.auth.config;
+package com.tracker.job_ts.auth.config.properties;
 
 import lombok.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -16,5 +16,4 @@ public class EmailChangeProperties {
     private long cooldownSeconds;
     private long codeValidityMinutes;
     private long tokenValidityMinutes;
-    private String frontendUrl;
 }
