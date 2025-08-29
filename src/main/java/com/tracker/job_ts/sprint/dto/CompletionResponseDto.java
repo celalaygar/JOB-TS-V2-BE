@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class CompletionResponseDto {
     private boolean success;
     private String message;
+    private SprintDto sprint;
+
 }

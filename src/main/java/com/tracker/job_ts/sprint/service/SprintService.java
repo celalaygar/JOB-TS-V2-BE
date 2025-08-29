@@ -446,6 +446,7 @@ public class SprintService {
                                                             .map(updatedSprint -> CompletionResponseDto.builder()
                                                                     .success(true)
                                                                     .message("Sprint status successfully changed to COMPLETED.")
+                                                                    .sprint(new SprintDto(sprint))
                                                                     .build());
                                                 } else {
                                                     return Mono.just(CompletionResponseDto.builder()
