@@ -5,7 +5,7 @@ public enum SprintStatus {
 
     PLANNED("Sprint PLANNED"),
     ACTIVE("Sprint ACTIVE"),
-    COMPLATED("Sprint COMPLATED");
+    COMPLETED("Sprint COMPLETED");
 
     private final String displayName;
 

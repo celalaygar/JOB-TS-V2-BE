@@ -36,8 +36,8 @@ public class User {
     private String position;
     private String company;
     private LocalDateTime createdAt;
-    private ProjectSystemRole projectSystemRole;
     private LocalDateTime updatedAt;
+    private ProjectSystemRole projectSystemRole;
 
     // New fields for email verification code
     private String emailVerificationCode;

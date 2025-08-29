@@ -91,7 +91,7 @@ public class ProjectTaskService {
                                                                 task.setCreatedProject(createdProject);
                                                                 task.setSystemStatus(ProjectTaskSystemStatus.ACTIVE);
                                                                 task.setProjectTaskStatus(new ProjectTaskStatusModel(status));
-                                                                task.setCreatedAt(Instant.now().toString()); // LocalDateTime.now() daha iyi olur
+                                                                task.setCreatedAt(LocalDateTime.now()); // LocalDateTime.now() daha iyi olur
                                                                 task.setParentTaskId(dto.getParentTaskId()); // ParentTaskId'yi set et
 
                                                                 // Eğer bir parent task varsa, parentTask objesini set et

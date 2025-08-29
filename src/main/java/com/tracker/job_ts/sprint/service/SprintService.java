@@ -252,7 +252,7 @@ public class SprintService {
                                 projectId, authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
                                 .switchIfEmpty(Mono.error(new IllegalAccessException("You are not a member of this project.")))
                                 .thenMany(
-                                        sprintRepository.findAllByCreatedProjectIdAndSprintStatusIsNot(projectId, SprintStatus.COMPLATED)
+                                        sprintRepository.findAllByCreatedProjectIdAndSprintStatusIsNot(projectId, SprintStatus.COMPLETED)
                                                 .map(SprintDto::new)
                                 )
                 );
@@ -402,19 +402,6 @@ public class SprintService {
                                         .flatMap(projectUser -> {
                                             SprintStatus newStatus = dto.getNewStatus();
 
-                                            // Durum geçişi kontrolleri
-                                            if (newStatus == SprintStatus.ACTIVE) {
-                                                if (sprint.getSprintStatus() != SprintStatus.PLANNED) {
-                                                    return Mono.error(new IllegalStateException("Sprint must be in PLANNED status to be activated."));
-                                                }
-                                            } else if (newStatus == SprintStatus.PLANNED) {
-                                                if (sprint.getSprintStatus() != SprintStatus.ACTIVE) {
-                                                    return Mono.error(new IllegalStateException("Sprint must be in ACTIVE status to be planned."));
-                                                }
-                                            } else {
-                                                // Diğer durumlar için (örn. COMPLETED) geçersiz geçiş hatası ver
-                                                return Mono.error(new IllegalArgumentException("Invalid sprint status transition."));
-                                            }
 
                                             // Durumu güncelle ve kaydet
                                             sprint.setSprintStatus(newStatus);
@@ -453,7 +440,7 @@ public class SprintService {
                                                         });
 
                                                 if (allTasksCompleted) {
-                                                    sprint.setSprintStatus(SprintStatus.COMPLATED);
+                                                    sprint.setSprintStatus(SprintStatus.COMPLETED);
                                                     sprint.setUpdatedAt(LocalDateTime.now());
                                                     return sprintRepository.save(sprint)
                                                             .map(updatedSprint -> CompletionResponseDto.builder()

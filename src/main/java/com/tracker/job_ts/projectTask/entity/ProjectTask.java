@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Document(collection = "project_tasks")
@@ -31,7 +32,7 @@ public class ProjectTask {
     private ProjectTaskType taskType;
     private AssaignSprint sprint;
     private AssaignBacklog backlog;
-    private String createdAt;
+    private LocalDateTime createdAt;
     private ProjectTaskStatusModel projectTaskStatus;
     //private List<ProjectTaskComment> comments;
     private String parentTaskId;

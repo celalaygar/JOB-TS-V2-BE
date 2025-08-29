@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +26,7 @@ public class ProjectTaskDto {
     private ProjectTaskPriority priority;
     private ProjectTaskType taskType;
     private AssaignSprint sprint;
-    private String createdAt;
+    private LocalDateTime createdAt;
     private String parentTaskId;
     private CreatedBy createdBy;
     private CreatedBy assignee;
