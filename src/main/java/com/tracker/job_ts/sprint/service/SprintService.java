@@ -10,11 +10,9 @@ import com.tracker.job_ts.project.repository.ProjectTaskStatusRepository;
 import com.tracker.job_ts.project.repository.ProjectTeamRepository;
 import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import com.tracker.job_ts.projectTask.dto.projectTask.ProjectTaskDto;
+import com.tracker.job_ts.projectTask.model.ProjectTaskStatusModel;
 import com.tracker.job_ts.projectTask.repository.ProjectTaskRepository;
-import com.tracker.job_ts.sprint.dto.SprintDto;
-import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
-import com.tracker.job_ts.sprint.dto.SprintStatusUpdateRequestDto;
-import com.tracker.job_ts.sprint.dto.SprintTaskRequestDto;
+import com.tracker.job_ts.sprint.dto.*;
 import com.tracker.job_ts.sprint.entity.*;
 import com.tracker.job_ts.sprint.model.TaskStatusOnCompletion;
 import com.tracker.job_ts.sprint.repository.SprintRepository;
@@ -423,6 +421,53 @@ public class SprintService {
                                             sprint.setUpdatedAt(LocalDateTime.now());
                                             return sprintRepository.save(sprint).map(SprintDto::new);
                                         })
+                        )
+                );
+    }
+
+    public Mono<CompletionResponseDto> completeSprint(String sprintId) {
+        return authHelperService.getAuthUser()
+                .flatMap(authUser -> sprintRepository.findById(sprintId)
+                        .switchIfEmpty(Mono.error(new NoSuchElementException("Sprint not found.")))
+                        .flatMap(sprint -> projectUserRepository.findByProjectIdAndUserIdAndProjectSystemRoleNot(
+                                        sprint.getCreatedProject().getId(), authUser.getId(), ProjectSystemRole.PROJECT_REMOVED_USER)
+                                .switchIfEmpty(Mono.error(new IllegalAccessException("User is not a member of this project.")))
+                                .flatMap(projectUser -> {
+                                    // Get all tasks associated with the sprint
+                                    return projectTaskRepository.findBySprintId(sprintId)
+                                            .collectList()
+                                            .flatMap(tasks -> {
+                                                if (tasks.isEmpty()) {
+                                                    return Mono.just(CompletionResponseDto.builder()
+                                                            .success(false)
+                                                            .message("No tasks found in this sprint.")
+                                                            .build());
+                                                }
+
+                                                // Check if all tasks have the required completion status
+                                                boolean allTasksCompleted = tasks.stream()
+                                                        .allMatch(task -> {
+                                                            ProjectTaskStatusModel taskStatus = task.getProjectTaskStatus();
+                                                            return taskStatus != null &&
+                                                                    taskStatus.getId().equals(sprint.getTaskStatusOnCompletion().getId());
+                                                        });
+
+                                                if (allTasksCompleted) {
+                                                    sprint.setSprintStatus(SprintStatus.COMPLATED);
+                                                    sprint.setUpdatedAt(LocalDateTime.now());
+                                                    return sprintRepository.save(sprint)
+                                                            .map(updatedSprint -> CompletionResponseDto.builder()
+                                                                    .success(true)
+                                                                    .message("Sprint status successfully changed to COMPLETED.")
+                                                                    .build());
+                                                } else {
+                                                    return Mono.just(CompletionResponseDto.builder()
+                                                            .success(false)
+                                                            .message("Cannot complete sprint. Not all tasks have the required completion status.")
+                                                            .build());
+                                                }
+                                            });
+                                })
                         )
                 );
     }

@@ -1,6 +1,7 @@
 package com.tracker.job_ts.sprint.controller;
 
 import com.tracker.job_ts.base.util.ApiPaths;
+import com.tracker.job_ts.sprint.dto.CompletionResponseDto;
 import com.tracker.job_ts.sprint.dto.SprintDto;
 import com.tracker.job_ts.sprint.dto.SprintRegisterDto;
 import com.tracker.job_ts.sprint.dto.SprintStatusUpdateRequestDto;
@@ -74,8 +75,25 @@ public class SprintController {
      * @return Güncellenmiş Sprint nesnesi
      */
     @PostMapping("/status")
-    public Mono<ResponseEntity<SprintDto>> updateSprintStatus(@RequestBody SprintStatusUpdateRequestDto dto) {
+    public Mono<ResponseEntity<SprintDto>> updateSprintStatus(
+            @RequestBody SprintStatusUpdateRequestDto dto) {
         return sprintService.updateSprintStatus(dto)
                 .map(ResponseEntity::ok);
+    }
+
+    /**
+     * Attempts to set the sprint status to COMPLETED after validating all tasks.
+     *
+     * @param sprintId The ID of the sprint to complete.
+     * @return A response object indicating success or failure.
+     */
+    @PostMapping("/status/complete")
+    public Mono<ResponseEntity<CompletionResponseDto>> completeSprint(@RequestBody SprintStatusUpdateRequestDto dto) {
+        return sprintService.completeSprint(dto.getSprintId())
+                .map(ResponseEntity::ok)
+                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(CompletionResponseDto.builder()
+                        .success(false)
+                        .message(e.getMessage())
+                        .build())));
     }
 }
