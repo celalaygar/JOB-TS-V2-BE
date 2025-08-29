@@ -47,7 +47,7 @@ public class PasswordResetService {
 
                     return userRepository.save(user)
                             .flatMap(u -> {
-                                String link =frontendUrl + "public/reset-password/" + token;
+                                String link =frontendUrl + "public/password-reset/token/" + token;
                                 String subject = "Password Reset Request";
                                 String content = "Hello,\n\nClick the link to reset your password:\n" + link +
                                         "\n\nThis link is valid for " + props.getTokenValidityMinutes() + " minutes.";
