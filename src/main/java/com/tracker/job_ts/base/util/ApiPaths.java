@@ -12,6 +12,7 @@ public class ApiPaths {
     public static final String SPRINT_USER_PATH = "/sprint-user";
     public static final String TASK_COMMENT_PATH = "/project-task-comment";
     public static final String EMAIL_CHANGE_PATH = "/email-change";
+    public static final String WEEKLY_BOARD_PATH = "/weekly-board";
     public static final String EMAIL_CHANGE_PUBLIC_PATH = "/email-change";
     public static final String PASSWORD_RESET_PUBLIC_PATH = "/password-reset";
 
@@ -21,6 +22,10 @@ public class ApiPaths {
     public static final class PasswordResetPublicCtrl {
         public static final String CTRL = PUBLIC_PATH+ PASSWORD_RESET_PUBLIC_PATH;
     }
+    public static final class WeeklyBoardCtrl {
+        public static final String CTRL = BASE_PATH_V2 + WEEKLY_BOARD_PATH;
+    }
+
     public static final class EmailChangeCtrl {
         public static final String CTRL = BASE_PATH_V2 + EMAIL_CHANGE_PATH;
     }
