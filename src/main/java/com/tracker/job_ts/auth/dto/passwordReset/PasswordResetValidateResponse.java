@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PasswordResetValidateResponse {
     private String token;
-    private boolean valid;
+    private Boolean valid;
     private String email;
+    private String message;
 }

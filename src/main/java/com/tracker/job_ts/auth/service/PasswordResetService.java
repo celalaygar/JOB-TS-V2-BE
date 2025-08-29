@@ -63,9 +63,9 @@ public class PasswordResetService {
                 .flatMap(user -> {
                     boolean valid = jwtProvider.validateResetPasswordToken(request.getToken()) &&
                             Duration.between(user.getResetPasswordTokenSentAt(), LocalDateTime.now()).toMinutes() < props.getTokenValidityMinutes();
-                    return Mono.just(new PasswordResetValidateResponse(request.getToken(), valid, user.getEmail()));
+                    return Mono.just(new PasswordResetValidateResponse(request.getToken(), valid, user.getEmail(), "Valid token"));
                 })
-                .switchIfEmpty(Mono.just(new PasswordResetValidateResponse(request.getToken(), false, null)));
+                .switchIfEmpty(Mono.just(new PasswordResetValidateResponse(request.getToken(), false, null, "Invalid token")));
     }
 
     public Mono<PasswordResetResponse> resetPassword(String token, String newPassword) {
