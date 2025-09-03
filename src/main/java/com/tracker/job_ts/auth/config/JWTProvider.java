@@ -22,18 +22,19 @@ import java.util.stream.Collectors;
 @Component
 public class JWTProvider {
 
-    private static String CLAIM_KEY = "systemRoles";
+    private static final String CLAIM_KEY = "systemRoles";
+
     @Value("${jwt.secret}")
-    private String SECRET ;
+    private String SECRET;
     @Value("${jwt.invitation-secret}")
-    private String INVITATION_SECRET ;
+    private String INVITATION_SECRET;
     @Value("${jwt.email-change-secret}")
-    private String EMAIL_CHANGE_SECRET ;
+    private String EMAIL_CHANGE_SECRET;
     @Value("${jwt.password-reset-secret}")
-    private String PASSWORD_RESET_SECRET ;
+    private String PASSWORD_RESET_SECRET;
 
     @Value("${jwt.expiredDay}")
-    private Long expiredDay ;
+    private Long expiredDay;
 
     @Value("${jwt.email-change-expiredDay}")
     private Long emailExpiredDay;
@@ -44,8 +45,8 @@ public class JWTProvider {
     @Value("${jwt.password-reset-expiredDay}")
     private Long passwordResetExpiredDay;
 
-    private SecretKey SECRET_KEY ;
-    private SecretKey INVITATION_SECRET_KEY ;
+    private SecretKey SECRET_KEY;
+    private SecretKey INVITATION_SECRET_KEY;
     private SecretKey EMAIL_CHANGE_SECRET_KEY;
     private SecretKey PASSWORD_RESET_SECRET_KEY;
 
@@ -54,7 +55,7 @@ public class JWTProvider {
         SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET));
         INVITATION_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(INVITATION_SECRET));
         EMAIL_CHANGE_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(EMAIL_CHANGE_SECRET));
-        PASSWORD_RESET_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(EMAIL_CHANGE_SECRET));
+        PASSWORD_RESET_SECRET_KEY = Keys.hmacShaKeyFor(Base64.getDecoder().decode(PASSWORD_RESET_SECRET));
     }
 
     public String generateToken(String email, List<SystemRole> roles) {
@@ -62,8 +63,8 @@ public class JWTProvider {
                 .setSubject(email)
                 .claim(CLAIM_KEY, roles)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expiredDay)) // 1 day
-                .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
+                .setExpiration(new Date(System.currentTimeMillis() + expiredDay))
+                .signWith(SECRET_KEY, SignatureAlgorithm.HS512)
                 .compact();
     }
 
@@ -82,7 +83,11 @@ public class JWTProvider {
     }
 
     public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
+        try {
+            return getClaimFromToken(token, Claims::getSubject);
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredJwtTokenException("Token süresi dolmuş.");
+        }
     }
 
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
@@ -94,31 +99,15 @@ public class JWTProvider {
         JwtParser parser = Jwts.parser()
                 .verifyWith(SECRET_KEY)
                 .build();
-        StringBuilder builder = new StringBuilder();
         return parser.parseSignedClaims(token).getPayload();
     }
 
-    public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY).build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
-    }
-
-    public Claims getClaims(String token) {
-        return Jwts.parser().setSigningKey(SECRET_KEY).build().parseClaimsJws(token).getBody();
-    }
-
-
-
-
-
     public List<SimpleGrantedAuthority> getAuthorities(String token) {
         List<String> roles = Jwts.parser()
-                .setSigningKey(SECRET_KEY).build()
-                .parseClaimsJws(token)
-                .getBody()
+                .verifyWith(SECRET_KEY)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
                 .get(CLAIM_KEY, List.class);
         return roles.stream()
                 .map(SimpleGrantedAuthority::new)
@@ -127,7 +116,7 @@ public class JWTProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
+            Jwts.parser().verifyWith(SECRET_KEY).build().parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
             throw new ExpiredJwtTokenException("Token süresi dolmuş.");
@@ -141,6 +130,30 @@ public class JWTProvider {
             throw new SecurityJwtTokenException("Token imzası doğrulanamadı.");
         } catch (Exception e) {
             throw new UnauthorizedException("Token doğrulama işleminde bir hata oluştu.");
+        }
+    }
+
+    public boolean isTokenExpiredOnly(String token) {
+        if (token == null || token.isBlank()) {
+            return false;
+        }
+
+        try {
+            Jwts.parser()
+                    .verifyWith(SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token);
+
+            // Eğer buraya kadar geldiyse, token geçerli ama expired olmayabilir
+            // Dolayısıyla expired DEĞİL → false
+            return false;
+
+        } catch (ExpiredJwtException e) {
+            // Token var ama expired → true
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            // Diğer tüm hatalar (malformed, signature invalid, null vs.) → false
+            return false;
         }
     }
 
