@@ -5,15 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -22,7 +19,6 @@ public class SecurityConfig {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -30,17 +26,12 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository)
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler((exchange, denied) -> {
-                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-                            exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                            String body = "{\"error\": \"Forbidden\"}";
-                            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
-                            return exchange.getResponse().writeWith(
-                                    Mono.just(exchange.getResponse().bufferFactory().wrap(bytes))
-                            );
-                        })
+                .exceptionHandling(exceptionHandlingSpec ->
+                        exceptionHandlingSpec
+                                .authenticationEntryPoint((swe, e) ->
+                                        Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED)))
+                                .accessDeniedHandler((swe, e) ->
+                                        Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.FORBIDDEN)))
                 )
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(

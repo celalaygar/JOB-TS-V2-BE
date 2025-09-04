@@ -1,6 +1,7 @@
 package com.tracker.job_ts.auth.config;
 
-import com.tracker.job_ts.auth.exception.JwtAuthenticationException;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -11,30 +12,24 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class SecurityContextRepository implements ServerSecurityContextRepository {
 
     private final AuthenticationManager authenticationManager;
 
-    public SecurityContextRepository(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-    }
-
     @Override
     public Mono<Void> save(ServerWebExchange exchange, SecurityContext context) {
-        return Mono.empty(); // stateless
+        return Mono.empty(); // stateless API olduğu için kaydetmiyoruz
     }
 
     @Override
     public Mono<SecurityContext> load(ServerWebExchange exchange) {
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        if (authHeader == null || authHeader.isEmpty()) {
-            return Mono.error(new JwtAuthenticationException("No token provided", "NO_TOKEN"));
+        if (authHeader != null && !"".equals(authHeader)) {
+            return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authHeader, authHeader))
+                    .map(SecurityContextImpl::new);
         }
-
-        return authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(authHeader, authHeader)
-                )
-                .map(SecurityContextImpl::new);
+        return Mono.empty();
     }
 }
