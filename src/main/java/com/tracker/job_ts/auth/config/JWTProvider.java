@@ -130,7 +130,7 @@ public class JWTProvider {
             Jwts.parser().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
             return true;
         } catch (ExpiredJwtException e) {
-            throw new ExpiredJwtTokenException("Token süresi dolmuş.");
+            throw new JwtTokenExpiredException("Token süresi dolmuş.");
         } catch (MalformedJwtException e) {
             throw new MalformedJwtTokenException("Geçersiz token formatı.");
         } catch (UnsupportedJwtException e) {
@@ -164,7 +164,7 @@ public class JWTProvider {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException e) {
-            throw new ExpiredJwtTokenException("Davet token süresi dolmuş.");
+            throw new JwtTokenExpiredException("Davet token süresi dolmuş.");
         } catch (MalformedJwtException e) {
             throw new MalformedJwtTokenException("Geçersiz token formatı.");
         } catch (UnsupportedJwtException e) {
@@ -205,7 +205,7 @@ public class JWTProvider {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException e) {
-            throw new ExpiredJwtTokenException("Email change link has expired.");
+            throw new JwtTokenExpiredException("Email change link has expired.");
         } catch (MalformedJwtException e) {
             throw new MalformedJwtTokenException("Invalid token format.");
         } catch (UnsupportedJwtException e) {

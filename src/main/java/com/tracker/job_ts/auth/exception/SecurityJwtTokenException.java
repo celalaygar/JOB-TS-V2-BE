@@ -1,6 +1,8 @@
 package com.tracker.job_ts.auth.exception;
 
-public class SecurityJwtTokenException extends RuntimeException {
+import org.springframework.security.core.AuthenticationException;
+
+public class SecurityJwtTokenException extends AuthenticationException {
     public SecurityJwtTokenException(String message) {
         super(message);
     }

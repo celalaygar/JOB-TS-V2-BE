@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
-    @ExceptionHandler(ExpiredJwtTokenException.class)
-    public Mono<ResponseEntity<Map<String, String>>> handleExpired(ExpiredJwtTokenException ex) {
+    @ExceptionHandler(JwtTokenExpiredException.class)
+    public Mono<ResponseEntity<Map<String, String>>> handleExpired(JwtTokenExpiredException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
