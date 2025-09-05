@@ -4,12 +4,19 @@ import com.tracker.job_ts.base.util.ApiPaths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.ServerSecurityContextRepository;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher.MatchResult;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Configuration
@@ -17,22 +24,19 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
+    private final ReactiveUserDetailsService userDetailsService;
+    private final JWTAuthenticationFilter jwtAuthenticationFilter;
+    private final JWTProvider jwtProvider;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+
+
+// SecurityConfig.java
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        return http
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .authenticationManager(authenticationManager)
-                .securityContextRepository(securityContextRepository)
-                .exceptionHandling(exceptionHandlingSpec ->
-                        exceptionHandlingSpec
-                                .authenticationEntryPoint((swe, e) ->
-                                        Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED)))
-                                .accessDeniedHandler((swe, e) ->
-                                        Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.FORBIDDEN)))
-                )
+        http
+                .securityMatcher(this::matchesApiPath)
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers(
                                 "/api/auth/**",
@@ -46,9 +50,35 @@ public class SecurityConfig {
                         .pathMatchers("/api/passive/**").hasAnyRole("PASSIVE", "ADMIN")
                         .anyExchange().authenticated()
                 )
-                .build();
+                .csrf(csrf -> csrf.disable())
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable())
+                .securityContextRepository(securityContextRepository())
+                .exceptionHandling(e -> e.authenticationEntryPoint(authenticationEntryPoint)) // ✅ Bu var
+                .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION);
+
+        return http.build();
     }
 
+    // ✅ Yeni method: Reactive matcher
+    private Mono<MatchResult> matchesApiPath(ServerWebExchange exchange) {
+        String path = exchange.getRequest().getURI().getPath();
+        return path.startsWith("/api/")
+                ? MatchResult.match()
+                : MatchResult.notMatch();
+    }
+
+    @Bean
+    public ReactiveAuthenticationManager reactiveAuthenticationManager() {
+        var authManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+        authManager.setPasswordEncoder(new BCryptPasswordEncoder());
+        return authManager;
+    }
+
+    @Bean
+    public ServerSecurityContextRepository securityContextRepository() {
+        return new JwtServerSecurityContextRepository(jwtProvider, userDetailsService);
+    }
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

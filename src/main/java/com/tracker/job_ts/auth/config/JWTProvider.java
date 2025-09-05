@@ -127,20 +127,15 @@ public class JWTProvider {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET_KEY).build().parseClaimsJws(token);
+            Jwts.parser()
+                    .verifyWith(SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            throw new JwtTokenExpiredException("Token süresi dolmuş.");
-        } catch (MalformedJwtException e) {
-            throw new MalformedJwtTokenException("Geçersiz token formatı.");
-        } catch (UnsupportedJwtException e) {
-            throw new UnsupportedJwtTokenException("Desteklenmeyen token türü.");
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentTokenException("Token boş ya da hatalı.");
-        } catch (SecurityException e) {
-            throw new SecurityJwtTokenException("Token imzası doğrulanamadı.");
-        } catch (Exception e) {
-            throw new UnauthorizedException("Token doğrulama işleminde bir hata oluştu.");
+            throw new ExpiredJwtException(e.getHeader(), e.getClaims(), "Token expired");
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
     }
 
