@@ -9,6 +9,7 @@ import com.tracker.job_ts.auth.dto.emailChange.EmailChangeValidationRequest;
 import com.tracker.job_ts.auth.dto.emailChange.EmailChangeValidationResponse;
 import com.tracker.job_ts.auth.repository.UserRepository;
 import com.tracker.job_ts.email.service.EmailService;
+import com.tracker.job_ts.project.repository.ProjectUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,7 @@ public class EmailChangeService {
     private final PasswordEncoder passwordEncoder;
     private final JWTProvider jwtProvider;
     private final EmailChangeProperties emailChangeProperties;
+    private final ProjectUserRepository projectUserRepository;
 
 
     @Value("${frontend.url}")
@@ -177,6 +179,8 @@ public class EmailChangeService {
                         return Mono.just(new EmailChangeResponse(false, "The email change token has expired."));
                     }
 
+                    String oldEmail = user.getEmail();
+                    String newEmail = user.getNewEmailPending();
                     // Final email update
                     user.setEmail(user.getNewEmailPending());
                     user.setNewEmailPending(null);
@@ -184,7 +188,14 @@ public class EmailChangeService {
                     user.setEmailChangeTokenSentAt(null);
 
                     return userRepository.save(user)
-                            .thenReturn(new EmailChangeResponse(true, "Email has been successfully updated."));
+                            // 3. ProjectUser dokümanlarını bul ve güncelle
+                            .flatMap(updatedUser -> projectUserRepository.findAllByUserId(updatedUser.getId())
+                                    .flatMap(projectUser -> {
+                                        projectUser.setEmail(newEmail);
+                                        return projectUserRepository.save(projectUser);
+                                    })
+                                    .then(Mono.just(new EmailChangeResponse(true, "Email has been successfully updated.")))
+                            );
                 })
                 .switchIfEmpty(Mono.just(new EmailChangeResponse(false, "Invalid email change token.")));
     }
