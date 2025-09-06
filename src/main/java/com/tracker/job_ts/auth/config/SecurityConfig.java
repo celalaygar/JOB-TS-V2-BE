@@ -71,7 +71,7 @@ public class SecurityConfig {
     @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager() {
         var authManager = new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
-        authManager.setPasswordEncoder(new BCryptPasswordEncoder());
+        authManager.setPasswordEncoder(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder());
         return authManager;
     }
 
