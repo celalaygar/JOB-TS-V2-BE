@@ -158,7 +158,7 @@ EMAIL_PASS=your-password
 
 ## 📸 Screenshots
 
-![Project Dashboard](https://raw.githubusercontent.com/celalaygar/main/refs/heads/main/project/job-tracking-system-v2/job-ts-1.png)
+![Project Dashboard](https://raw.githubusercontent.com/celalaygar/main/refs/heads/main/project/job-tracking-system-v2/job-ts-9.png)
 ![Kanban Board](https://raw.githubusercontent.com/celalaygar/main/refs/heads/main/project/job-tracking-system-v2/job-ts-2.png)
 ![Weekly Board](https://raw.githubusercontent.com/celalaygar/main/refs/heads/main/project/job-tracking-system-v2/job-ts-3.png)
 
